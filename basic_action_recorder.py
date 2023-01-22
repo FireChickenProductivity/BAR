@@ -38,14 +38,16 @@ class BasicAction:
         self.arguments = arguments
     
     def compute_talon_script(self):
-        code = self.name + '(' + ', '.join(self.compute_arguments_converted_to_string()) + ')'
+        code = self.name + '(' + ', '.join(self.compute_arguments_converted_to_talon_script_string()) + ')'
         return code
     
-    def compute_arguments_converted_to_string(self):
+    def compute_arguments_converted_to_talon_script_string(self):
         result = []
         for argument in self.arguments:
             if type(argument) == str:
                 converted_argument = self.compute_string_argument(argument)
+            elif type(argument) == bool:
+                converted_argument = str(compute_talon_script_boolean_value(argument))
             else:
                 converted_argument = str(argument)
             result.append(converted_argument)
@@ -54,6 +56,11 @@ class BasicAction:
     def compute_string_argument(self, argument: str):
         string_argument = "'" + argument.replace("'", "\\'") + "'"
         return string_argument
+
+def compute_talon_script_boolean_value(value: bool):
+    if value:
+        return 1
+    return 0
 
 class TalonTimeSpecification:
     def __init__(self, amount: int, unit: str):
@@ -94,7 +101,7 @@ class MainActions:
 
     def mouse_scroll(y: float = 0, x: float = 0, by_lines: bool = False):
         actions.next(y, x, by_lines)
-        recorder.record_basic_action('mouse_scroll', [y, x])
+        recorder.record_basic_action('mouse_scroll', [y, x, by_lines])
 
 module = Module()
 module.tag(RECORDING_TAG_NAME)
