@@ -94,7 +94,7 @@ class MainActions:
 
     def mouse_scroll(y: float = 0, x: float = 0, by_lines: bool = False):
         actions.next(y, x, by_lines)
-        recorder.record_basic_action('mouse_scroll', [y, x, by_lines])
+        recorder.record_basic_action('mouse_scroll', [y, x])
 
 module = Module()
 module.tag(RECORDING_TAG_NAME)
