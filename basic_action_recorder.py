@@ -34,6 +34,9 @@ class ActionRecorder:
     def start_accepting_actions(self):
         self.will_accept_actions = True
     
+    def is_accepting_actions(self):
+        return self.will_accept_actions
+    
     def compute_talon_script(self):
         code = []
         for action in self.actions:
@@ -104,6 +107,7 @@ class TalonTimeSpecification:
         return self.__str__()
 
 recorder = ActionRecorder()
+history = ActionHistory()
 RECORDING_TAG_NAME = 'basic_action_recorder_recording'
 module.tag(RECORDING_TAG_NAME)
 recording_context = Context()
@@ -141,14 +145,17 @@ class Actions:
         '''Causes the basic action recorder to start recording actions'''
         start_recording()
         recorder.clear()
+        recorder.start_accepting_actions()
     
     def basic_action_recorder_stop_recording():
         '''Causes the basic action recorder to stop recording actions'''
-        stop_recording()
+        recorder.stop_accepting_actions()
+        stop_recording_if_nothing_listening()
     
     def basic_action_recorder_type_talon_script():
         '''Types out the talon script of the recorded actions'''
-        stop_recording()
+        recorder.stop_accepting_actions()
+        stop_recording_if_nothing_listening()
         code = recorder.compute_talon_script()
         for line_of_code in code:
             actions.insert(line_of_code)
@@ -162,8 +169,9 @@ class Actions:
 def start_recording():
     context.tags = ['user.' + RECORDING_TAG_NAME]
 
-def stop_recording():
-    context.tags = []
+def stop_recording_if_nothing_listening():
+    if not (recorder.is_accepting_actions() or history.is_recording_history()):
+        context.tags = []
 
 def log(*args):
     string_arguments = []
