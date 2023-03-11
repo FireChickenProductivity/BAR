@@ -1,5 +1,13 @@
 from talon import Module, actions, Context
 
+module = Module()
+history_size = module.setting(
+    'basic_action_recorder_history_size',
+    type = int,
+    default = 20,
+    desc = 'How many basic actions to show at a time in the basic action recorder history'
+)
+
 class ActionRecorder:
     def __init__(self):
         self.actions = []
@@ -31,7 +39,17 @@ class ActionRecorder:
         for action in self.actions:
             code.append(action.compute_talon_script())
         return code
+
+class ActionHistory:
+    def __init__(self):
+        self.actions = []
+        self.commands = []
     
+    def record_action(self, description: str):
+        self.actions.append(description)
+        if len(self.actions) > history_size.get():
+            self.actions.pop(0)
+
 class BasicAction:
     def __init__(self, name, arguments):
         self.name = name
@@ -74,8 +92,8 @@ class TalonTimeSpecification:
         return self.__str__()
 
 recorder = ActionRecorder()
-
 RECORDING_TAG_NAME = 'basic_action_recorder_recording'
+module.tag(RECORDING_TAG_NAME)
 recording_context = Context()
 recording_context.matches = 'tag: user.' + RECORDING_TAG_NAME
 
@@ -103,8 +121,6 @@ class MainActions:
         actions.next(y, x, by_lines)
         recorder.record_basic_action('mouse_scroll', [y, x, by_lines])
 
-module = Module()
-module.tag(RECORDING_TAG_NAME)
 context = Context()
 
 @module.action_class
