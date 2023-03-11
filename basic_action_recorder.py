@@ -165,6 +165,15 @@ class Actions:
         '''Records a sleep action for the specified number of milliseconds in the basic action recorder'''
         time_specification = TalonTimeSpecification(milliseconds, 'ms')
         recorder.record_basic_action('sleep', [time_specification])
+    
+    def basic_action_recorder_record_history():
+        '''Causes the basic action recorder to record the history of actions performed'''
+        history.start_recording_history()
+    
+    def basic_action_recorder_stop_recording_history():
+        '''Causes the basic action recorder to stop recording the history of actions performed'''
+        history.stop_recording_history()
+        stop_recording_if_nothing_listening()
 
 def start_recording():
     context.tags = ['user.' + RECORDING_TAG_NAME]
