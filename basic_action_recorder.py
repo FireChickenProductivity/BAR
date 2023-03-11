@@ -120,10 +120,12 @@ class MainActions:
         actions.next(text)
         recorder.start_accepting_actions()
         recorder.record_basic_action('insert', [text])
+        history.record_action(compute_insert_description(text))
 
     def key(key: str):
         actions.next(key)
         recorder.record_basic_action('key', [key])
+        history.record_action(compute_key_description(key))
 
     def mouse_click(button: int = 0):
         actions.next(button)
@@ -136,6 +138,12 @@ class MainActions:
     def mouse_scroll(y: float = 0, x: float = 0, by_lines: bool = False):
         actions.next(y, x, by_lines)
         recorder.record_basic_action('mouse_scroll', [y, x, by_lines])
+
+def compute_insert_description(text: str):
+    return f"Type: {text}"
+
+def compute_key_description(keystroke: str):
+    return f'Press: {keystroke}'
 
 context = Context()
 
