@@ -44,11 +44,23 @@ class ActionHistory:
     def __init__(self):
         self.actions = []
         self.commands = []
+        self.should_record_history = False
     
     def record_action(self, description: str):
-        self.actions.append(description)
-        if len(self.actions) > history_size.get():
-            self.actions.pop(0)
+        if self.should_record_history:
+            self.actions.append(description)
+            if len(self.actions) > history_size.get():
+                self.actions.pop(0)
+    
+    def is_recording_history(self):
+        return self.should_record_history
+    
+    def start_recording_history(self):
+        self.should_record_history = True
+    
+    def stop_recording_history(self):
+        self.should_record_history = False
+
 
 class BasicAction:
     def __init__(self, name, arguments):
