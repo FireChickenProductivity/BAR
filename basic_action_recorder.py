@@ -1,4 +1,4 @@
-from talon import Module, actions, Context
+from talon import Module, actions, Context, imgui
 
 module = Module()
 history_size = module.setting(
@@ -63,6 +63,9 @@ class ActionHistory:
     
     def stop_recording_history(self):
         self.should_record_history = False
+    
+    def get_action_history(self):
+        return self.actions
 
 
 class BasicAction:
@@ -182,6 +185,14 @@ class Actions:
         '''Causes the basic action recorder to stop recording the history of actions performed'''
         history.stop_recording_history()
         stop_recording_if_nothing_listening()
+    
+    def basic_action_recorder_show_history():
+        '''Shows the basic action recorder history of actions performed'''
+        gui.show()
+    
+    def basic_action_recorder_hide_history():
+        '''Stops displaying the basic action recorder history of actions performed'''
+        gui.hide()
 
 def start_recording():
     context.tags = ['user.' + RECORDING_TAG_NAME]
@@ -196,3 +207,12 @@ def log(*args):
         string_arguments.append(str(argument))
     text = ' '.join(string_arguments)
     print('Basic Action Recorder:', text)
+
+@imgui.open(y=0)
+def gui(gui: imgui.GUI):
+    global history
+    gui.text("Basic Action History")
+    gui.line()
+    
+    for description in history.get_action_history():
+        gui.text(description)
