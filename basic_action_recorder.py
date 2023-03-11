@@ -11,7 +11,7 @@ history_size = module.setting(
 class ActionRecorder:
     def __init__(self):
         self.actions = []
-        self.start_accepting_actions()
+        self.stop_accepting_actions()
     
     def clear(self):
         self.actions.clear()
@@ -119,9 +119,15 @@ recording_context.matches = 'tag: user.' + RECORDING_TAG_NAME
 @recording_context.action_class("main")
 class MainActions:
     def insert(text: str):
+        recorder_was_recording = recorder.is_accepting_actions()
+        history_was_recording = history.is_recording_history()
         recorder.stop_accepting_actions()
+        history.stop_recording_history()
         actions.next(text)
-        recorder.start_accepting_actions()
+        if recorder_was_recording:
+            recorder.start_accepting_actions()
+        if history_was_recording:
+            history.start_recording_history()
         recorder.record_basic_action('insert', [text])
         history.record_action(compute_insert_description(text))
 
@@ -180,6 +186,7 @@ class Actions:
     def basic_action_recorder_record_history():
         '''Causes the basic action recorder to record the history of actions performed'''
         history.start_recording_history()
+        start_recording()
     
     def basic_action_recorder_stop_recording_history():
         '''Causes the basic action recorder to stop recording the history of actions performed'''
