@@ -139,10 +139,12 @@ class MainActions:
     def mouse_click(button: int = 0):
         actions.next(button)
         recorder.record_basic_action('mouse_click', [button])
+        history.record_action(compute_mouse_click_description(button))
 
     def mouse_move(x: float, y: float):
         actions.next(x, y)
         recorder.record_basic_action('mouse_move', [x, y])
+        history.record_action(compute_mouse_movement_description(x, y))
 
     def mouse_scroll(y: float = 0, x: float = 0, by_lines: bool = False):
         actions.next(y, x, by_lines)
@@ -153,6 +155,17 @@ def compute_insert_description(text: str):
 
 def compute_key_description(keystroke: str):
     return f'Press: {keystroke}'
+
+def compute_mouse_click_description(button: int):
+    if button == 0:
+        return 'Left click'
+    elif button == 1:
+        return 'Right click'
+    elif button == 2:
+        return 'Middle Click'
+
+def compute_mouse_movement_description(x, y):
+    return f'Mouse moved to {x}, {y}'
 
 context = Context()
 
