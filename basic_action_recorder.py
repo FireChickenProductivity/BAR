@@ -1,4 +1,4 @@
-from talon import Module, actions, Context, imgui
+from talon import Module, actions, Context, imgui, speech_system
 
 module = Module()
 history_size = module.setting(
@@ -46,7 +46,6 @@ class ActionRecorder:
 class ActionHistory:
     def __init__(self):
         self.actions = []
-        self.commands = []
         self.should_record_history = False
     
     def record_action(self, description: str):
@@ -227,6 +226,16 @@ def log(*args):
         string_arguments.append(str(argument))
     text = ' '.join(string_arguments)
     print('Basic Action Recorder:', text)
+
+def on_phrase(j):
+    global history
+    if history.is_recording_history() and actions.speech.enabled():
+        words = j.get('text')
+        if words:
+            command_chain = ' '.join(words)
+            history.record_action('Command: ' + command_chain)
+
+speech_system.register('phrase', on_phrase)
 
 @imgui.open(y=0)
 def gui(gui: imgui.GUI):
