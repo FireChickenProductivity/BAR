@@ -50,9 +50,14 @@ class ActionHistory:
     
     def record_action(self, description: str):
         if self.should_record_history:
-            self.actions.append(description)
-            if len(self.actions) > history_size.get():
-                self.actions.pop(0)
+            if len(self.actions) > 0:
+                previous_number_of_times, previous_action = compute_action_recording_parts(self.actions[-1])
+                if previous_action == description:
+                    self.actions[-1] = f'{previous_number_of_times + 1}X {description}'
+            if len(self.actions) == 0 or previous_action != description:
+                self.actions.append(description)
+                if len(self.actions) > history_size.get():
+                    self.actions.pop(0)
     
     def is_recording_history(self):
         return self.should_record_history
@@ -65,6 +70,12 @@ class ActionHistory:
     
     def get_action_history(self):
         return self.actions
+
+def compute_action_recording_parts(recording: str):
+    prefix, _, description = recording.partition('X ')
+    if prefix != '' and prefix.isdigit():
+        return int(prefix), description
+    return 1, recording
 
 
 class BasicAction:
