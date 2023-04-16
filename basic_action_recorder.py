@@ -148,6 +148,7 @@ class MainActions:
     def mouse_scroll(y: float = 0, x: float = 0, by_lines: bool = False):
         actions.next(y, x, by_lines)
         recorder.record_basic_action('mouse_scroll', [y, x, by_lines])
+        history.record_action(compute_mouse_scroll_description(y, x, by_lines))
 
 def compute_insert_description(text: str):
     return f"Type: {text}"
@@ -165,6 +166,34 @@ def compute_mouse_click_description(button: int):
 
 def compute_mouse_movement_description(x, y):
     return f'Mouse moved to {x}, {y}'
+
+def compute_mouse_scroll_description(y: float, x: float, by_lines: bool):
+    text: str = ''
+    if y != 0:
+        text += compute_mouse_scroll_partial_description(y, True, by_lines)
+    if x != 0:
+        if text != '':
+            text += '\n'
+        text += compute_mouse_scroll_partial_description(x, False, by_lines)
+    return text
+
+def compute_mouse_scroll_partial_description(amount: float, is_vertical: bool, by_lines: bool):
+    text: str = 'Scroll '
+    if is_vertical:
+        if amount >= 0:
+            text += 'Down '
+        else:
+            text += 'Up '
+    else:
+        if amount >= 0:
+            text += 'Right '
+        else:
+            text += 'Left '
+    text += str(abs(amount))
+    if by_lines:
+        text += ' Lines'
+    return text
+
 
 context = Context()
 
