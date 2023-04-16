@@ -173,7 +173,7 @@ def compute_mouse_scroll_description(y: float, x: float, by_lines: bool):
         text += compute_mouse_scroll_partial_description(y, True, by_lines)
     if x != 0:
         if text != '':
-            text += '\n'
+            text += ' and '
         text += compute_mouse_scroll_partial_description(x, False, by_lines)
     return text
 
