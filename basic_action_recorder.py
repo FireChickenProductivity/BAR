@@ -50,11 +50,13 @@ class ActionHistory:
     
     def record_action(self, description: str):
         if self.should_record_history:
+            previous_number_of_times = None
+            previous_action = ''
             if len(self.actions) > 0:
                 previous_number_of_times, previous_action = compute_action_recording_parts(self.actions[-1])
-                if previous_action == description:
-                    self.actions[-1] = f'{previous_number_of_times + 1}X {description}'
-            if len(self.actions) == 0 or previous_action != description:
+            if previous_action == description and previous_number_of_times is not None:
+                self.actions[-1] = f'{previous_number_of_times + 1}X {description}'
+            else:
                 self.actions.append(description)
                 if len(self.actions) > history_size.get():
                     self.actions.pop(0)
