@@ -42,6 +42,10 @@ class ActionRecorder:
         for action in self.actions:
             code.append(action.compute_talon_script())
         return code
+    
+    def perform_actions(self):
+        for action in self.actions:
+            action.perform()
 
 class ActionHistory:
     def __init__(self):
@@ -104,6 +108,13 @@ class BasicAction:
     def compute_string_argument(self, argument: str):
         string_argument = "'" + argument.replace("'", "\\'") + "'"
         return string_argument
+    
+    def perform(self):
+        function = getattr(actions, self.name)
+        if len(self.arguments) > 0:
+            function(*self.arguments)
+        else:
+            function()
 
 def compute_talon_script_boolean_value(value: bool):
     if value:
@@ -232,6 +243,10 @@ class Actions:
             actions.insert(line_of_code)
             actions.key('enter')
     
+    def basic_action_recorder_play_recording():
+        '''Plays the actions recorded by the basic action recorder'''
+        recorder.perform_actions()
+
     def basic_action_recorder_record_millisecond_sleep(milliseconds: int):
         '''Records a sleep action for the specified number of milliseconds in the basic action recorder'''
         time_specification = TalonTimeSpecification(milliseconds, 'ms')
