@@ -9,3 +9,9 @@ bar stop recording: Causes the BAR to stop recording.
 bar sleep (non-negative imager) milliseconds: Causes the BAR to record a sleep action for the specified number of milliseconds. A sleep action pauses the active talon command for the specified amount of time. This is used because the BAR cannot record sleep actions directly.
 
 bar type recording: Types out the talon script for the recorded actions. It types each line of talon code and presses enter after each. 
+
+bar play recording: Perform the recorded actions.
+
+bar history show: Show a command history including basic actions and command names. 
+
+bar history hide: Hide the bar history. 
