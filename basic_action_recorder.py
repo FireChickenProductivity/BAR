@@ -1,12 +1,31 @@
-from talon import Module, actions, Context, imgui, speech_system
+from talon import Module, actions, Context, imgui, speech_system, app
+import json
+import os
 
 module = Module()
 history_size = module.setting(
     'basic_action_recorder_history_size',
     type = int,
     default = 20,
-    desc = 'How many basic actions to show at a time in the basic action recorder history'
+    desc = 'How many basic actions to show at a time in the basic action recorder history.'
 )
+
+should_record_in_file = module.setting(
+    'basic_action_recorder_record_in_file',
+    type = int,
+    default = 0,
+    desc = 'Determines if the basic action recorder should record actions in a file for analysis. 0 means false and any other integer means true.'
+)
+
+OUTPUT_DIRECTORY = None
+PRIMARY_OUTPUT_FILE = 'record.txt'
+def set_up():
+    global OUTPUT_DIRECTORY
+    OUTPUT_DIRECTORY = os.path.join(actions.path.talon_user(), 'BAR Output')
+    if not os.path.exists(OUTPUT_DIRECTORY):
+        os.makedirs(OUTPUT_DIRECTORY)
+
+app.register('ready', set_up)
 
 class ActionRecorder:
     def __init__(self):
@@ -115,6 +134,14 @@ class BasicAction:
             function(*self.arguments)
         else:
             function()
+    
+    def to_json(self) -> str:
+        return json.dumps({'name': self.name, 'arguments': self.arguments})
+    
+    @staticmethod
+    def from_json(text: str):
+        representation = json.loads(text)
+        return BasicAction(representation['name'], representation['arguments'])
 
 def compute_talon_script_boolean_value(value: bool):
     if value:
