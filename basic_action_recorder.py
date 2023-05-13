@@ -19,9 +19,11 @@ should_record_in_file = module.setting(
 
 OUTPUT_DIRECTORY = None
 PRIMARY_OUTPUT_FILE = 'record.txt'
+PRIMARY_OUTPUT_PATH = None
 def set_up():
-    global OUTPUT_DIRECTORY
+    global OUTPUT_DIRECTORY, PRIMARY_OUTPUT_PATH
     OUTPUT_DIRECTORY = os.path.join(actions.path.talon_user(), 'BAR Output')
+    PRIMARY_OUTPUT_PATH = os.path.join(OUTPUT_DIRECTORY, PRIMARY_OUTPUT_FILE)
     if not os.path.exists(OUTPUT_DIRECTORY):
         os.makedirs(OUTPUT_DIRECTORY)
 
@@ -46,6 +48,8 @@ class ActionRecorder:
             action = BasicAction(name, arguments)
             self.record_action(action)
             log('action recorded:', name, arguments, 'code', action.compute_talon_script())
+            if should_record_in_file.get():
+                record_output_to_file(action.to_json())
     
     def stop_accepting_actions(self):
         self.will_accept_actions = False
@@ -310,6 +314,10 @@ def log(*args):
         string_arguments.append(str(argument))
     text = ' '.join(string_arguments)
     print('Basic Action Recorder:', text)
+
+def record_output_to_file(text: str):
+    with open(PRIMARY_OUTPUT_PATH, 'a') as file:
+        file.write(text + '\n')
 
 def on_phrase(j):
     global history
