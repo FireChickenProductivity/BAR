@@ -27,12 +27,11 @@ def set_up():
     if not os.path.exists(OUTPUT_DIRECTORY):
         os.makedirs(OUTPUT_DIRECTORY)
 
-app.register('ready', set_up)
-
 class ActionRecorder:
     def __init__(self):
         self.actions = []
         self.stop_accepting_actions()
+        self.temporarily_rejecting_actions = False
     
     def clear(self):
         self.actions.clear()
@@ -44,18 +43,23 @@ class ActionRecorder:
         self.actions.append(action)
     
     def record_basic_action(self, name, arguments):
+        action = None
         if self.will_accept_actions:
             action = BasicAction(name, arguments)
             self.record_action(action)
             log('action recorded:', name, arguments, 'code', action.compute_talon_script())
-            if should_record_in_file.get():
-                record_output_to_file(action.to_json())
+        if should_record_in_file.get() != 0 and not self.temporarily_rejecting_actions:
+            if action is None:
+                action = BasicAction(name, arguments)
+            record_output_to_file(action.to_json())
     
-    def stop_accepting_actions(self):
+    def stop_accepting_actions(self, *, temporary = False):
         self.will_accept_actions = False
+        self.temporarily_rejecting_actions = temporary
     
     def start_accepting_actions(self):
         self.will_accept_actions = True
+        self.temporarily_rejecting_actions = False
     
     def is_accepting_actions(self):
         return self.will_accept_actions
@@ -175,7 +179,7 @@ class MainActions:
     def insert(text: str):
         recorder_was_recording = recorder.is_accepting_actions()
         history_was_recording = history.is_recording_history()
-        recorder.stop_accepting_actions()
+        recorder.stop_accepting_actions(temporary = True)
         history.stop_recording_history()
         actions.next(text)
         if recorder_was_recording:
@@ -321,11 +325,16 @@ def record_output_to_file(text: str):
 
 def on_phrase(j):
     global history
-    if history.is_recording_history() and actions.speech.enabled():
+    if actions.speech.enabled() and (history.is_recording_history() or should_record_in_file.get() != 0):
         words = j.get('text')
         if words:
             command_chain = ' '.join(words)
-            history.record_action('Command: ' + command_chain)
+            if history.is_recording_history():
+                history.record_action('Command: ' + command_chain)
+            if should_record_in_file.get() != 0:
+                record_output_to_file('Command: ' + command_chain)
+
+
 
 speech_system.register('phrase', on_phrase)
 
@@ -337,3 +346,5 @@ def gui(gui: imgui.GUI):
     
     for description in history.get_action_history():
         gui.text(description)
+
+app.register('ready', set_up)   
