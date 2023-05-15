@@ -30,7 +30,7 @@ def set_up():
 class ActionRecorder:
     def __init__(self):
         self.actions = []
-        self.stop_accepting_actions()
+        self.stop_recording_actions_in_primary_memory()
         self.temporarily_rejecting_actions = False
     
     def clear(self):
@@ -44,25 +44,30 @@ class ActionRecorder:
     
     def record_basic_action(self, name, arguments):
         action = None
-        if self.will_accept_actions:
-            action = BasicAction(name, arguments)
-            self.record_action(action)
-            log('action recorded:', name, arguments, 'code', action.compute_talon_script())
-        if should_record_in_file.get() != 0 and not self.temporarily_rejecting_actions:
-            if action is None:
+        if not self.temporarily_rejecting_actions:
+            if self.recording_actions_in_primary_memory:
                 action = BasicAction(name, arguments)
-            record_output_to_file(action.to_json())
+                self.record_action(action)
+                log('action recorded:', name, arguments, 'code', action.compute_talon_script())
+            if should_record_in_file.get():
+                if action is None:
+                    action = BasicAction(name, arguments)
+                record_output_to_file(action.to_json())
     
-    def stop_accepting_actions(self, *, temporary = False):
-        self.will_accept_actions = False
-        self.temporarily_rejecting_actions = temporary
+    def stop_recording_actions_in_primary_memory(self):
+        self.recording_actions_in_primary_memory = False
     
-    def start_accepting_actions(self):
-        self.will_accept_actions = True
+    def start_recording_actions_in_primary_memory(self):
+        self.recording_actions_in_primary_memory = True
+    
+    def temporarily_reject_actions(self):
+        self.temporarily_rejecting_actions = True
+
+    def stop_temporarily_rejecting_actions(self):
         self.temporarily_rejecting_actions = False
-    
+
     def is_accepting_actions(self):
-        return self.will_accept_actions
+        return self.recording_actions_in_primary_memory
     
     def compute_talon_script(self):
         code = []
@@ -177,13 +182,11 @@ recording_context.matches = 'tag: user.' + RECORDING_TAG_NAME
 @recording_context.action_class("main")
 class MainActions:
     def insert(text: str):
-        recorder_was_recording = recorder.is_accepting_actions()
+        recorder.temporarily_reject_actions()
         history_was_recording = history.is_recording_history()
-        recorder.stop_accepting_actions(temporary = True)
         history.stop_recording_history()
         actions.next(text)
-        if recorder_was_recording:
-            recorder.start_accepting_actions()
+        recorder.stop_temporarily_rejecting_actions()
         if history_was_recording:
             history.start_recording_history()
         recorder.record_basic_action('insert', [text])
@@ -262,16 +265,16 @@ class Actions:
         '''Causes the basic action recorder to start recording actions'''
         start_recording()
         recorder.clear()
-        recorder.start_accepting_actions()
+        recorder.start_recording_actions_in_primary_memory()
     
     def basic_action_recorder_stop_recording():
         '''Causes the basic action recorder to stop recording actions'''
-        recorder.stop_accepting_actions()
+        recorder.stop_recording_actions_in_primary_memory()
         stop_recording_if_nothing_listening()
     
     def basic_action_recorder_type_talon_script():
         '''Types out the talon script of the recorded actions'''
-        recorder.stop_accepting_actions()
+        recorder.stop_recording_actions_in_primary_memory()
         stop_recording_if_nothing_listening()
         code = recorder.compute_talon_script()
         for line_of_code in code:
