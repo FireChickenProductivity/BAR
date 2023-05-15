@@ -1,4 +1,4 @@
-from talon import Module, actions, Context, imgui, speech_system, app
+from talon import Module, actions, Context, imgui, speech_system, app, settings
 import json
 import os
 
@@ -312,8 +312,16 @@ def start_recording():
     context.tags = ['user.' + RECORDING_TAG_NAME]
 
 def stop_recording_if_nothing_listening():
-    if not (recorder.is_accepting_actions() or history.is_recording_history()):
+    if not (recorder.is_accepting_actions() or history.is_recording_history() or should_record_in_file.get()):
         context.tags = []
+
+def start_recording_when_should_record_in_file(should_record_in_file):
+    if should_record_in_file:
+        start_recording()
+    else:
+        stop_recording_if_nothing_listening()
+    
+settings.register('user.basic_action_recorder_record_in_file', start_recording_when_should_record_in_file)
 
 def log(*args):
     string_arguments = []
@@ -336,8 +344,6 @@ def on_phrase(j):
                 history.record_action('Command: ' + command_chain)
             if should_record_in_file.get() != 0:
                 record_output_to_file('Command: ' + command_chain)
-
-
 
 speech_system.register('phrase', on_phrase)
 
