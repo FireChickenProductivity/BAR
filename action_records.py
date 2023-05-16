@@ -1,5 +1,4 @@
 import json
-from talon import actions, Module
 
 class BasicAction:
     def __init__(self, name, arguments):
@@ -26,12 +25,11 @@ class BasicAction:
         string_argument = "'" + argument.replace("'", "\\'") + "'"
         return string_argument
     
-    def perform(self):
-        function = getattr(actions, self.name)
-        if len(self.arguments) > 0:
-            function(*self.arguments)
-        else:
-            function()
+    def get_name(self):
+        return self.name
+    
+    def get_arguments(self):
+        return self.arguments
     
     def to_json(self) -> str:
         return json.dumps({'name': self.name, 'arguments': self.arguments})
@@ -58,24 +56,26 @@ class Command:
         return self.actions
 
 
-module = Module()
-@module.action_class
-class Actions:
-    def basic_action_recorder_read_file_record(path: str):
-        '''Obtains a list of the basic actions performed by the commands in the specified record file'''
-        commands = []
-        current_command_name = ''
-        current_command_actions = []
-        with open(path, 'r') as file:
-            line = file.readline()
-            while line:
-                line_without_trailing_newline = line.strip()
-                if is_action(line_without_trailing_newline):
-                    current_command_actions.append(BasicAction.from_json(line_without_trailing_newline))
-                elif line.startswith('Command: '):
+
+def basic_action_recorder_read_file_record(path: str):
+    '''Obtains a list of the basic actions performed by the commands in the specified record file'''
+    commands = []
+    current_command_name = ''
+    current_command_actions = []
+    with open(path, 'r') as file:
+        line = file.readline()
+        while line:
+            line_without_trailing_newline = line.strip()
+            if is_action(line_without_trailing_newline):
+                current_command_actions.append(BasicAction.from_json(line_without_trailing_newline))
+            elif line.startswith('Command: '):
+                if len(current_command_actions) > 0:
                     commands.append(Command(current_command_name, current_command_actions)) 
-                    current_command_name = line_without_trailing_newline
-                    current_command_name = []
+                current_command_name = line_without_trailing_newline
+                current_command_name = []
+    return commands
  
+
+
 def is_action(text: str):
     return text.startswith('{')
