@@ -1,5 +1,5 @@
 import json
-from talon import actions
+from talon import actions, Module
 
 class BasicAction:
     def __init__(self, name, arguments):
@@ -45,3 +45,37 @@ def compute_talon_script_boolean_value(value: bool):
     if value:
         return 1
     return 0
+
+class Command:
+    def __init__(self, name: str, actions):
+        self.name = name
+        self.actions = actions
+    
+    def get_name(self):
+        return self.name
+    
+    def get_actions(self):
+        return self.actions
+
+
+module = Module()
+@module.action_class
+class Actions:
+    def basic_action_recorder_read_file_record(path: str):
+        '''Obtains a list of the basic actions performed by the commands in the specified record file'''
+        commands = []
+        current_command_name = ''
+        current_command_actions = []
+        with open(path, 'r') as file:
+            line = file.readline()
+            while line:
+                line_without_trailing_newline = line.strip()
+                if is_action(line_without_trailing_newline):
+                    current_command_actions.append(BasicAction.from_json(line_without_trailing_newline))
+                elif line.startswith('Command: '):
+                    commands.append(Command(current_command_name, current_command_actions)) 
+                    current_command_name = line_without_trailing_newline
+                    current_command_name = []
+ 
+def is_action(text: str):
+    return text.startswith('{')
