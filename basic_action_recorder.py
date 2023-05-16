@@ -77,7 +77,14 @@ class ActionRecorder:
     
     def perform_actions(self):
         for action in self.actions:
-            action.perform()
+            perform_basic_action(action)
+
+def perform_basic_action(action: BasicAction):
+    function = getattr(actions, action.get_name())
+    if len(action.get_arguments()) > 0:
+        function(*action.get_arguments())
+    else:
+        function()
 
 class ActionHistory:
     def __init__(self):
