@@ -70,12 +70,16 @@ def basic_action_recorder_read_file_record(path: str):
                 current_command_actions.append(BasicAction.from_json(line_without_trailing_newline))
             elif line.startswith('Command: '):
                 if len(current_command_actions) > 0:
-                    commands.append(Command(current_command_name, current_command_actions)) 
+                    commands.append(Command(current_command_name, current_command_actions[:])) 
                 current_command_name = line_without_trailing_newline
-                current_command_name = []
+                current_command_actions = []
+            line = file.readline()
+        if len(current_command_actions) > 0:
+            commands.append(Command(current_command_name, current_command_actions[:])) 
     return commands
  
 
 
 def is_action(text: str):
     return text.startswith('{')
+
