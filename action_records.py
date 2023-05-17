@@ -59,6 +59,7 @@ class Command:
         self.name += f' {command.get_name()}'
         self.actions.extend(command.get_actions())
 
+COMMAND_NAME_PREFIX = 'Command: '
 
 def read_file_record(path: str):
     '''Obtains a list of the basic actions performed by the commands in the specified record file'''
@@ -71,15 +72,18 @@ def read_file_record(path: str):
             line_without_trailing_newline = line.strip()
             if is_action(line_without_trailing_newline):
                 current_command_actions.append(BasicAction.from_json(line_without_trailing_newline))
-            elif line.startswith('Command: '):
+            elif line.startswith(COMMAND_NAME_PREFIX):
                 if len(current_command_actions) > 0:
                     commands.append(Command(current_command_name, current_command_actions[:])) 
-                current_command_name = line_without_trailing_newline
+                current_command_name = compute_command_name_without_prefix(line_without_trailing_newline)
                 current_command_actions = []
             line = file.readline()
         if len(current_command_actions) > 0:
             commands.append(Command(current_command_name, current_command_actions[:])) 
     return commands
+
+def compute_command_name_without_prefix(command_name: str):
+    return command_name[len(COMMAND_NAME_PREFIX):]
  
 
 
