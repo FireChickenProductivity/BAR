@@ -55,9 +55,12 @@ class Command:
     def get_actions(self):
         return self.actions
 
+    def append_command(self, command):
+        self.name += f' {command.get_name()}'
+        self.actions.extend(command.get_actions())
 
 
-def basic_action_recorder_read_file_record(path: str):
+def read_file_record(path: str):
     '''Obtains a list of the basic actions performed by the commands in the specified record file'''
     commands = []
     current_command_name = ''
