@@ -38,6 +38,9 @@ class BasicAction:
     def from_json(text: str):
         representation = json.loads(text)
         return BasicAction(representation['name'], representation['arguments'])
+    
+    def __eq__(self, other: object) -> bool:
+        return self.name == other.name and self.arguments == other.arguments
 
 def compute_talon_script_boolean_value(value: bool):
     if value:
@@ -92,4 +95,3 @@ def compute_command_name_without_prefix(command_name: str):
 
 def is_action(text: str):
     return text.startswith('{')
-
