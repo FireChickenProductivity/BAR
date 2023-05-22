@@ -22,7 +22,7 @@ PRIMARY_OUTPUT_FILE = 'record.txt'
 PRIMARY_OUTPUT_PATH = None
 def set_up():
     global OUTPUT_DIRECTORY, PRIMARY_OUTPUT_PATH
-    OUTPUT_DIRECTORY = os.path.join(actions.path.talon_user(), 'BAR Output')
+    OUTPUT_DIRECTORY = os.path.join(actions.path.talon_user(), 'BAR Data')
     PRIMARY_OUTPUT_PATH = os.path.join(OUTPUT_DIRECTORY, PRIMARY_OUTPUT_FILE)
     if not os.path.exists(OUTPUT_DIRECTORY):
         os.makedirs(OUTPUT_DIRECTORY)
