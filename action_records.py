@@ -39,7 +39,7 @@ class BasicAction:
         representation = json.loads(text)
         return BasicAction(representation['name'], representation['arguments'])
     
-    def __eq__(self, other: object) -> bool:
+    def __eq__(self, other) -> bool:
         return self.name == other.name and self.arguments == other.arguments
 
 def compute_talon_script_boolean_value(value: bool):
@@ -64,6 +64,9 @@ class Command:
     
     def copy(self):
         return Command(self.name, self.actions[:])
+    
+    def has_same_actions_as(self, other):
+        return self.actions == other.actions
 
 COMMAND_NAME_PREFIX = 'Command: '
 
