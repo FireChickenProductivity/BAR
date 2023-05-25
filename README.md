@@ -15,3 +15,6 @@ bar play recording: Perform the recorded actions.
 bar history show: Show a command history including basic actions and command names. 
 
 bar history hide: Hide the bar history. 
+
+# Settings
+If user.basic_action_recorder_record_in_file is set to any integer other than 0, the basic action history is outputted to the record.txt file in the BAR Data directory. The setting is 0 by default. 
