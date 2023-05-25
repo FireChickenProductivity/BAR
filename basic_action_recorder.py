@@ -1,17 +1,37 @@
-from talon import Module, actions, Context, imgui, speech_system
+from talon import Module, actions, Context, imgui, speech_system, app, settings
+from .action_records import BasicAction
+import os
 
 module = Module()
 history_size = module.setting(
     'basic_action_recorder_history_size',
     type = int,
     default = 20,
-    desc = 'How many basic actions to show at a time in the basic action recorder history'
+    desc = 'How many basic actions to show at a time in the basic action recorder history.'
 )
+
+should_record_in_file = module.setting(
+    'basic_action_recorder_record_in_file',
+    type = int,
+    default = 0,
+    desc = 'Determines if the basic action recorder should record actions in a file for analysis. 0 means false and any other integer means true.'
+)
+
+OUTPUT_DIRECTORY = None
+PRIMARY_OUTPUT_FILE = 'record.txt'
+PRIMARY_OUTPUT_PATH = None
+def set_up():
+    global OUTPUT_DIRECTORY, PRIMARY_OUTPUT_PATH
+    OUTPUT_DIRECTORY = os.path.join(actions.path.talon_user(), 'BAR Data')
+    PRIMARY_OUTPUT_PATH = os.path.join(OUTPUT_DIRECTORY, PRIMARY_OUTPUT_FILE)
+    if not os.path.exists(OUTPUT_DIRECTORY):
+        os.makedirs(OUTPUT_DIRECTORY)
 
 class ActionRecorder:
     def __init__(self):
         self.actions = []
-        self.stop_accepting_actions()
+        self.stop_recording_actions_in_primary_memory()
+        self.temporarily_rejecting_actions = False
     
     def clear(self):
         self.actions.clear()
@@ -23,19 +43,31 @@ class ActionRecorder:
         self.actions.append(action)
     
     def record_basic_action(self, name, arguments):
-        if self.will_accept_actions:
-            action = BasicAction(name, arguments)
-            self.record_action(action)
-            log('action recorded:', name, arguments, 'code', action.compute_talon_script())
+        action = None
+        if not self.temporarily_rejecting_actions:
+            if self.recording_actions_in_primary_memory:
+                action = BasicAction(name, arguments)
+                self.record_action(action)
+                log('action recorded:', name, arguments, 'code', action.compute_talon_script())
+            if should_record_in_file.get():
+                if action is None:
+                    action = BasicAction(name, arguments)
+                record_output_to_file(action.to_json())
     
-    def stop_accepting_actions(self):
-        self.will_accept_actions = False
+    def stop_recording_actions_in_primary_memory(self):
+        self.recording_actions_in_primary_memory = False
     
-    def start_accepting_actions(self):
-        self.will_accept_actions = True
+    def start_recording_actions_in_primary_memory(self):
+        self.recording_actions_in_primary_memory = True
     
+    def temporarily_reject_actions(self):
+        self.temporarily_rejecting_actions = True
+
+    def stop_temporarily_rejecting_actions(self):
+        self.temporarily_rejecting_actions = False
+
     def is_accepting_actions(self):
-        return self.will_accept_actions
+        return self.recording_actions_in_primary_memory
     
     def compute_talon_script(self):
         code = []
@@ -45,7 +77,14 @@ class ActionRecorder:
     
     def perform_actions(self):
         for action in self.actions:
-            action.perform()
+            perform_basic_action(action)
+
+def perform_basic_action(action: BasicAction):
+    function = getattr(actions, action.get_name())
+    if len(action.get_arguments()) > 0:
+        function(*action.get_arguments())
+    else:
+        function()
 
 class ActionHistory:
     def __init__(self):
@@ -83,44 +122,6 @@ def compute_action_recording_parts(recording: str):
         return int(prefix), description
     return 1, recording
 
-
-class BasicAction:
-    def __init__(self, name, arguments):
-        self.name = name
-        self.arguments = arguments
-    
-    def compute_talon_script(self):
-        code = self.name + '(' + ', '.join(self.compute_arguments_converted_to_talon_script_string()) + ')'
-        return code
-    
-    def compute_arguments_converted_to_talon_script_string(self):
-        result = []
-        for argument in self.arguments:
-            if type(argument) == str:
-                converted_argument = self.compute_string_argument(argument)
-            elif type(argument) == bool:
-                converted_argument = str(compute_talon_script_boolean_value(argument))
-            else:
-                converted_argument = str(argument)
-            result.append(converted_argument)
-        return result
-    
-    def compute_string_argument(self, argument: str):
-        string_argument = "'" + argument.replace("'", "\\'") + "'"
-        return string_argument
-    
-    def perform(self):
-        function = getattr(actions, self.name)
-        if len(self.arguments) > 0:
-            function(*self.arguments)
-        else:
-            function()
-
-def compute_talon_script_boolean_value(value: bool):
-    if value:
-        return 1
-    return 0
-
 class TalonTimeSpecification:
     def __init__(self, amount: int, unit: str):
         self.amount = amount
@@ -142,13 +143,11 @@ recording_context.matches = 'tag: user.' + RECORDING_TAG_NAME
 @recording_context.action_class("main")
 class MainActions:
     def insert(text: str):
-        recorder_was_recording = recorder.is_accepting_actions()
+        recorder.temporarily_reject_actions()
         history_was_recording = history.is_recording_history()
-        recorder.stop_accepting_actions()
         history.stop_recording_history()
         actions.next(text)
-        if recorder_was_recording:
-            recorder.start_accepting_actions()
+        recorder.stop_temporarily_rejecting_actions()
         if history_was_recording:
             history.start_recording_history()
         recorder.record_basic_action('insert', [text])
@@ -227,16 +226,16 @@ class Actions:
         '''Causes the basic action recorder to start recording actions'''
         start_recording()
         recorder.clear()
-        recorder.start_accepting_actions()
+        recorder.start_recording_actions_in_primary_memory()
     
     def basic_action_recorder_stop_recording():
         '''Causes the basic action recorder to stop recording actions'''
-        recorder.stop_accepting_actions()
+        recorder.stop_recording_actions_in_primary_memory()
         stop_recording_if_nothing_listening()
     
     def basic_action_recorder_type_talon_script():
         '''Types out the talon script of the recorded actions'''
-        recorder.stop_accepting_actions()
+        recorder.stop_recording_actions_in_primary_memory()
         stop_recording_if_nothing_listening()
         code = recorder.compute_talon_script()
         for line_of_code in code:
@@ -274,8 +273,16 @@ def start_recording():
     context.tags = ['user.' + RECORDING_TAG_NAME]
 
 def stop_recording_if_nothing_listening():
-    if not (recorder.is_accepting_actions() or history.is_recording_history()):
+    if not (recorder.is_accepting_actions() or history.is_recording_history() or should_record_in_file.get()):
         context.tags = []
+
+def start_recording_when_should_record_in_file(should_record_in_file):
+    if should_record_in_file:
+        start_recording()
+    else:
+        stop_recording_if_nothing_listening()
+    
+settings.register('user.basic_action_recorder_record_in_file', start_recording_when_should_record_in_file)
 
 def log(*args):
     string_arguments = []
@@ -284,13 +291,20 @@ def log(*args):
     text = ' '.join(string_arguments)
     print('Basic Action Recorder:', text)
 
+def record_output_to_file(text: str):
+    with open(PRIMARY_OUTPUT_PATH, 'a') as file:
+        file.write(text + '\n')
+
 def on_phrase(j):
     global history
-    if history.is_recording_history() and actions.speech.enabled():
+    if actions.speech.enabled() and (history.is_recording_history() or should_record_in_file.get() != 0):
         words = j.get('text')
         if words:
             command_chain = ' '.join(words)
-            history.record_action('Command: ' + command_chain)
+            if history.is_recording_history():
+                history.record_action('Command: ' + command_chain)
+            if should_record_in_file.get() != 0:
+                record_output_to_file('Command: ' + command_chain)
 
 speech_system.register('phrase', on_phrase)
 
@@ -302,3 +316,5 @@ def gui(gui: imgui.GUI):
     
     for description in history.get_action_history():
         gui.text(description)
+
+app.register('ready', set_up)   
