@@ -81,7 +81,10 @@ class ActionRecorder:
 
 def perform_basic_action(action: BasicAction):
     function = getattr(actions, action.get_name())
-    if len(action.get_arguments()) > 0:
+    if action.get_name() == 'sleep': #Special case for sleep because it cannot be recorded directly
+        duration = action.get_arguments()[0]
+        function(str(duration))
+    elif len(action.get_arguments()) > 0:
         function(*action.get_arguments())
     else:
         function()
