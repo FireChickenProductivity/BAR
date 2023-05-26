@@ -177,6 +177,24 @@ def compute_recommendations_from_record(record, max_command_chain_considered = 1
     sorted_recommended_commands = sorted(recommended_commands, key = lambda command: command.get_number_of_times_used(), reverse = True)
     return sorted_recommended_commands
 
+def simplify_commands(commands):
+    for command in commands:
+        new_actions = []
+        last_non_repeat_action = None
+        repeat_count: int = 0
+        for action in command.get_actions():
+            if action == last_non_repeat_action:
+                repeat_count += 1
+            else:
+                if repeat_count > 0:
+                    new_actions.append(BasicAction('repeat', repeat_count))
+                    repeat_count = 0
+                new_actions.append(action)
+        if repeat_count > 0:
+            new_actions.append(BasicAction('repeat', repeat_count))
+            repeat_count = 0
+        command.update_actions(new_actions)
+
 def generate_recommendations(directory):
     record = obtain_file_record(directory)
     print('finished reading record')
