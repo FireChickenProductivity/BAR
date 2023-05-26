@@ -77,9 +77,19 @@ class TestCommandSimplification(unittest.TestCase):
         command_list = [generate_potential_command_information_on_press_a()]
         expected_list = command_list[:]
         simplify_commands(command_list)
-        self.assertTrue(len(command_list) == len(command_list))
+        self.assertTrue(len(command_list) == len(expected_list))
         self.assertEqual(command_list[0], expected_list[0])
+    
+    def tests_simplify_commands_simplifies_single_command_properly(self):
+        command_list = [generate_potential_command_information_with_uses(generate_multiple_key_pressing_actions(['b', 'b', 'c', 'd', 'd', 'd', 'a', 'l', 'l']), ['test'])]
+        expected_action_list = [generate_key_press_action('b'), BasicAction('repeat', [1]), generate_key_press_action('c'), generate_key_press_action('d'), BasicAction('repeat', [2]), 
+        generate_key_press_action('a'), generate_key_press_action('l'), BasicAction('repeat', [1])]
+        expected_command_list = [generate_potential_command_information_with_uses(expected_action_list, ['test'])]
 
+        simplify_commands(command_list)
+
+        self.assertTrue(len(command_list) == len(command_list))
+        self.assertTrue(potential_command_informations_match(command_list[0], expected_command_list[0]))
 
 def get_command_set_information_matching_actions(command_set, actions):
     def search_condition(command):
@@ -95,8 +105,7 @@ def generate_potential_command_information_with_uses(actions, invocations):
         
 def potential_command_informations_match(original, other):
     return original.get_average_words_dictated() == other.get_average_words_dictated() and original.get_number_of_actions() == other.get_number_of_actions() and \
-            original.get_number_of_times_used() == other.get_number_of_times_used()
-
+            original.get_number_of_times_used() == other.get_number_of_times_used() and original.get_actions() == other.get_actions()
 
 def return_true(value):
     return True
