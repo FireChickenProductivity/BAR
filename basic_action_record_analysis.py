@@ -32,6 +32,9 @@ class PotentialCommandInformation:
     def get_actions(self):
         return self.actions
     
+    def update_actions(self, new_actions):
+        self.actions = new_actions
+    
     def process_usage(self, words_dictated: str):
         words = words_dictated.split(' ')
         number_of_words = len(words)
