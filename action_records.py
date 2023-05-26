@@ -40,7 +40,7 @@ class BasicAction:
         return BasicAction(representation['name'], representation['arguments'])
     
     def __eq__(self, other) -> bool:
-        return self.name == other.name and self.arguments == other.arguments
+        return other is not None and self.name == other.name and self.arguments == other.arguments
 
 def compute_talon_script_boolean_value(value: bool):
     if value:
