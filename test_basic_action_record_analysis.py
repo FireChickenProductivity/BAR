@@ -72,6 +72,15 @@ class TestCommandSet(unittest.TestCase):
         self.assertTrue(potential_command_informations_match(press_a_information, expected_press_a_information))
         self.assertTrue(potential_command_informations_match(copy_all_information, expected_copy_all_information))
 
+class TestCommandSimplification(unittest.TestCase):
+    def test_simplify_commands_does_nothing_to_single_keypress_command(self):
+        command_list = [generate_potential_command_information_on_press_a()]
+        expected_list = command_list[:]
+        simplify_commands(command_list)
+        self.assertTrue(len(command_list) == len(command_list))
+        self.assertEqual(command_list[0], expected_list[0])
+
+
 def get_command_set_information_matching_actions(command_set, actions):
     def search_condition(command):
         return command.get_actions() == actions
