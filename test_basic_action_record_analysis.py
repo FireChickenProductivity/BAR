@@ -52,12 +52,51 @@ class TestCommandSet(unittest.TestCase):
         self.assertEqual(command_information.get_average_words_dictated(), 2)
         self.assertEqual(command_information.get_number_of_actions(), 2)
         self.assertEqual(command_information.get_number_of_times_used(), 1)
+    
+    def test_command_set_handles_multiple_commands_with_multiple_uses(self):
+        command_set = CommandSet()
+        press_a = generate_press_a_command()
+        copy_all = generate_copy_all_command()
+        
+        command_set.process_command_usage(press_a)
+        command_set.process_command_usage(copy_all)
+        command_set.process_command_usage(copy_all)
+        command_set.process_command_usage(press_a)
+        command_set.process_command_usage(press_a)
+
+        expected_press_a_information = generate_potential_command_information_with_uses(generate_press_a_action_list(), [press_a.get_name()]*3)
+        expected_copy_all_information = generate_potential_command_information_with_uses(generate_copy_all_action_list(), [copy_all.get_name()]*2)
+        press_a_information = get_command_set_information_matching_actions(command_set, press_a.get_actions())
+        copy_all_information = get_command_set_information_matching_actions(command_set, copy_all.get_actions())
+
+        self.assertTrue(potential_command_informations_match(press_a_information, expected_press_a_information))
+        self.assertTrue(potential_command_informations_match(copy_all_information, expected_copy_all_information))
+
+def get_command_set_information_matching_actions(command_set, actions):
+    def search_condition(command):
+        return command.get_actions() == actions
+    matching_actions = command_set.get_commands_meeting_condition(search_condition)
+    return matching_actions[0]
+
+def generate_potential_command_information_with_uses(actions, invocations):        
+    information = PotentialCommandInformation(actions)
+    for invocation in invocations:
+        information.process_usage(invocation)
+    return information
+        
+def potential_command_informations_match(original, other):
+    return original.get_average_words_dictated() == other.get_average_words_dictated() and original.get_number_of_actions() == other.get_number_of_actions() and \
+            original.get_number_of_times_used() == other.get_number_of_times_used()
+
 
 def return_true(value):
     return True
 
 def generate_potential_command_information_on_press_a():
     return PotentialCommandInformation(generate_press_a_action_list())
+
+def generate_press_a_command():
+    return Command('air', generate_press_a_action_list())
 
 def generate_press_a_action_list():
     return [generate_press_a_action()]
@@ -66,7 +105,13 @@ def generate_press_a_action():
     return generate_key_press_action('a')
 
 def generate_copy_all_command():
-    return generate_multiple_key_pressing_command('copy all', ['ctrl-a', 'ctrl-c'])
+    return generate_multiple_key_pressing_command('copy all', generate_copy_all_keystroke_list())
+
+def generate_copy_all_action_list():
+    return generate_multiple_key_pressing_actions(generate_copy_all_keystroke_list())
+
+def generate_copy_all_keystroke_list():
+    return ['ctrl-a', 'ctrl-c']
 
 def generate_multiple_key_pressing_command(name: str, keystrokes):
     actions = generate_multiple_key_pressing_actions(keystrokes)
