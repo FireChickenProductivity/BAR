@@ -313,7 +313,13 @@ speech_system.register('phrase', on_phrase)
 
 def on_noise(name: str, finished: bool):
     if history.is_recording_history():
-        history.record_action(f'Noise: {name} {"start" if finished else "end"}')
+        history.record_action(f'Noise: {name} {compute_noise_postfix(finished)}')
+    
+    if should_record_in_file.get():
+        record_output_to_file('Command: ' + 'noise_' + name + '_' + compute_noise_postfix(finished))
+
+def compute_noise_postfix(finished: bool):
+    return "start" if finished else "end"
 
 from talon import noise
 noise.register("", on_noise)
