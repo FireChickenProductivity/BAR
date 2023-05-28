@@ -12,7 +12,7 @@ bar type recording: Types out the talon script for the recorded actions. It type
 
 bar play recording: Perform the recorded actions.
 
-bar history show: Show a command history including basic actions and command names. 
+bar history show: Show a command history including basic actions, command names, and the names of registered noises (only works with noise recognition configured through noise.register). 
 
 bar history hide: Hide the bar history. 
 
