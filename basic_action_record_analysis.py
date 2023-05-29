@@ -55,10 +55,14 @@ class CommandSet:
     def insert_command(self, command, representation):
         self.commands[representation] = command
     
-    def process_command_usage(self, command):
+    def process_command_usage(self, command, *, is_abstract_representation = False):
         representation = CommandSet.compute_representation(command)
         if representation not in self.commands:
             self.insert_command(PotentialCommandInformation(command.get_actions()), representation)
+            if not is_abstract_representation:
+                if should_make_abstract_repeat_representation(command):
+                    abstract_repeat_representation = make_abstract_repeat_representation_for(command, is_abstract_representation = True)
+                    self.process_command_usage(abstract_repeat_representation)
         self.commands[representation].process_usage(command.get_name())
 
     @staticmethod
