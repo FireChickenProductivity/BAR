@@ -95,6 +95,12 @@ def compute_string_representation_of_actions(actions):
         representation += action.to_json()
     return representation
 
+def should_make_abstract_repeat_representation(command):
+    actions = command.get_actions()
+    if len(actions) <= 2:
+        return False
+    return any(action.get_name() == 'repeat' for action in actions)
+
 def basic_command_filter(command: PotentialCommandInformation):
     return command.get_average_words_dictated() > 1 and command.get_number_of_times_used() > 1 and (command.get_number_of_actions()/command.get_average_words_dictated() < 2 or command.get_number_of_actions()*math.sqrt(command.get_number_of_times_used()) > command.get_average_words_dictated())
 
