@@ -73,23 +73,21 @@ class TestCommandSet(unittest.TestCase):
         self.assertTrue(potential_command_informations_match(copy_all_information, expected_copy_all_information))
 
 class TestCommandSimplification(unittest.TestCase):
-    def test_simplify_commands_does_nothing_to_single_keypress_command(self):
-        command_list = [generate_potential_command_information_on_press_a()]
-        expected_list = command_list[:]
-        simplify_commands(command_list)
-        self.assertTrue(len(command_list) == len(expected_list))
-        self.assertEqual(command_list[0], expected_list[0])
+    def test_repeat_simplify_command_does_nothing_to_press_a(self):
+        command = generate_press_a_command()
+        expected_command = command.copy()
+        simplified_command = compute_repeat_simplified_command(command)
+        self.assertEqual(simplified_command.get_actions(), expected_command.get_actions())
     
-    def tests_simplify_commands_simplifies_single_command_properly(self):
-        command_list = [generate_potential_command_information_with_uses(generate_multiple_key_pressing_actions(['b', 'b', 'c', 'd', 'd', 'd', 'a', 'l', 'l']), ['test'])]
-        expected_action_list = [generate_key_press_action('b'), BasicAction('repeat', [1]), generate_key_press_action('c'), generate_key_press_action('d'), BasicAction('repeat', [2]), 
+    def test_repeat_simplify_command_handles_multiple_repetitions(self):
+        command = Command('test', generate_multiple_key_pressing_actions(['b', 'b', 'c', 'd', 'd', 'd', 'a', 'l', 'l']))
+        expected_actions = [generate_key_press_action('b'), BasicAction('repeat', [1]), generate_key_press_action('c'), generate_key_press_action('d'), BasicAction('repeat', [2]), 
         generate_key_press_action('a'), generate_key_press_action('l'), BasicAction('repeat', [1])]
-        expected_command_list = [generate_potential_command_information_with_uses(expected_action_list, ['test'])]
+        expected_command = Command('test', expected_actions)
 
-        simplify_commands(command_list)
+        simplified_command = compute_repeat_simplified_command(command)
 
-        self.assertTrue(len(command_list) == len(command_list))
-        self.assertTrue(potential_command_informations_match(command_list[0], expected_command_list[0]))
+        self.assertEqual(simplified_command.get_actions(), expected_command.get_actions())
 
 def get_command_set_information_matching_actions(command_set, actions):
     def search_condition(command):
