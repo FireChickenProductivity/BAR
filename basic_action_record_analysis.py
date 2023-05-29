@@ -20,6 +20,11 @@ class PotentialCommandInformation:
         self.actions = actions
         self.number_of_times_used: int = 0
         self.total_number_of_words_dictated: int = 0
+        self.number_of_actions: int = len(self.actions)
+        for action in self.actions:
+            argument = action.get_arguments()[0]
+            if action.get_name() == 'repeat' and type(argument) == int:
+                self.number_of_actions += argument - 1
     
     def get_number_of_actions(self):
         return len(self.actions)
@@ -59,10 +64,10 @@ class CommandSet:
         representation = CommandSet.compute_representation(command)
         if representation not in self.commands:
             self.insert_command(PotentialCommandInformation(command.get_actions()), representation)
-            if not is_abstract_representation:
-                if should_make_abstract_repeat_representation(command):
-                    abstract_repeat_representation = make_abstract_repeat_representation_for(command, is_abstract_representation = True)
-                    self.process_command_usage(abstract_repeat_representation)
+            # if not is_abstract_representation:
+            #     if should_make_abstract_repeat_representation(command):
+            #         abstract_repeat_representation = make_abstract_repeat_representation_for(command)
+            #         self.process_command_usage(abstract_repeat_representation, is_abstract_representation = True)
         self.commands[representation].process_usage(command.get_name())
 
     @staticmethod
@@ -189,40 +194,41 @@ def output_recommendations(recommended_commands, output_directory):
                 file.write('\t' + action.compute_talon_script() + '\n')
             file.write('\n\n')
 
-def simplify_commands(commands):
-    for command in commands:
-        new_actions = []
-        last_non_repeat_action = None
-        repeat_count: int = 0
-        for action in command.get_actions():
-            if action == last_non_repeat_action:
-                repeat_count += 1
-            else:
-                if repeat_count > 0:
-                    new_actions.append(BasicAction('repeat', [repeat_count]))
-                    repeat_count = 0
-                new_actions.append(action)
-                last_non_repeat_action = action
-        if repeat_count > 0:
-            new_actions.append(BasicAction('repeat', [repeat_count]))
-            repeat_count = 0
-        command.update_actions(new_actions)
+def compute_repeat_simplified_command(command):
+    new_actions = []
+    last_non_repeat_action = None
+    repeat_count: int = 0
+    for action in command.get_actions():
+        if action == last_non_repeat_action:
+            repeat_count += 1
+        else:
+            if repeat_count > 0:
+                new_actions.append(BasicAction('repeat', [repeat_count]))
+                repeat_count = 0
+            new_actions.append(action)
+            last_non_repeat_action = action
+    if repeat_count > 0:
+        new_actions.append(BasicAction('repeat', [repeat_count]))
+        repeat_count = 0
+    new_command = Command(command.get_name(), new_actions)
+    return new_command
 
 def compute_recommendations_from_record(record, max_command_chain_considered = 100):
     command_set: CommandSet = CommandSet()
     for command in record:
-        command_set.process_command_usage(command)
+        simplified_command = compute_repeat_simplified_command(command)
+        command_set.process_command_usage(simplified_command)
     
     for i in range(len(record) - 1):
         rolling_command: Command = record[i].copy()
         roll_target = min(len(record), i + max_command_chain_considered)
         for j in range(i + 1, roll_target):
             rolling_command.append_command(record[j])
-            command_set.process_command_usage(rolling_command.copy())
+            simplified_rolling_command = compute_repeat_simplified_command(rolling_command)
+            command_set.process_command_usage(simplified_rolling_command)
         print('roll', i + 1, 'out of', len(record) - 1, 'target: ', roll_target - 1)
     recommended_commands = command_set.get_commands_meeting_condition(basic_command_filter)
     sorted_recommended_commands = sorted(recommended_commands, key = lambda command: command.get_number_of_times_used(), reverse = True)
-    simplify_commands(sorted_recommended_commands)
     return sorted_recommended_commands
 
 def generate_recommendations(directory):
