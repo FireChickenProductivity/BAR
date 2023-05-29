@@ -60,6 +60,14 @@ class TalonCapture:
     
     def compute_command_component(self):
         return f'<{self.name}>'
+    
+    def to_json(self):
+        return json.dumps({'name': self.name, 'instance': self.instance})
+    
+    @staticmethod
+    def from_json(json):
+        attributes = json.loads(json)
+        return TalonCapture(attributes['name'], attributes['instance'])
 
 class Command:
     def __init__(self, name: str, actions):
