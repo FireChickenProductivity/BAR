@@ -1,8 +1,9 @@
 import json
 import math
 from pathlib import PurePath
+
 try:
-    from action_records import BasicAction, read_file_record, Command
+    from action_records import BasicAction, read_file_record, Command, TalonCapture
 except ImportError:
     pass
 import os
@@ -100,6 +101,23 @@ def should_make_abstract_repeat_representation(command):
     if len(actions) <= 2:
         return False
     return any(action.get_name() == 'repeat' for action in actions)
+
+def make_abstract_repeat_representation_for(command):
+    actions = command.get_actions()
+    instances = 0
+    new_actions = []
+    new_name = command.get_name()
+    for action in actions:
+        if action.get_name() == 'repeat':
+            instances += 1
+            argument = TalonCapture('number_small', instances)
+            repeat_action = BasicAction('repeat', argument)
+            new_actions.append(repeat_action)
+            new_name += ' ' + argument.compute_command_component()
+        else:
+            new_actions.append(action)
+    new_command = Command(new_name, new_actions)
+    return new_command
 
 def basic_command_filter(command: PotentialCommandInformation):
     return command.get_average_words_dictated() > 1 and command.get_number_of_times_used() > 1 and (command.get_number_of_actions()/command.get_average_words_dictated() < 2 or command.get_number_of_actions()*math.sqrt(command.get_number_of_times_used()) > command.get_average_words_dictated())
