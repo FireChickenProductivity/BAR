@@ -55,6 +55,9 @@ class TalonCapture:
         return self.__str__()
     
     def __str__(self):
+        return self.name
+    
+    def compute_command_component(self):
         return f'<{self.name}>'
 
 class Command:
