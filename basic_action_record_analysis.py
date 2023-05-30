@@ -102,6 +102,9 @@ class CommandSet:
         representation = CommandSet.compute_representation(command)
         return self.contains_command_with_representation(representation)
 
+    def get_size(self):
+        return len(self.commands)
+
     def __repr__(self):
         return self.__str__()
     
