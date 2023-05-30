@@ -64,10 +64,10 @@ class CommandSet:
         representation = CommandSet.compute_representation(command)
         if representation not in self.commands:
             self.insert_command(PotentialCommandInformation(command.get_actions()), representation)
-            # if not is_abstract_representation:
-            #     if should_make_abstract_repeat_representation(command):
-            #         abstract_repeat_representation = make_abstract_repeat_representation_for(command)
-            #         self.process_command_usage(abstract_repeat_representation, is_abstract_representation = True)
+            if not is_abstract_representation:
+                if should_make_abstract_repeat_representation(command):
+                    abstract_repeat_representation = make_abstract_repeat_representation_for(command)
+                    self.process_command_usage(abstract_repeat_representation, is_abstract_representation = True)
         self.commands[representation].process_usage(command.get_name())
 
     @staticmethod
@@ -120,7 +120,7 @@ def make_abstract_repeat_representation_for(command):
         if action.get_name() == 'repeat':
             instances += 1
             argument = TalonCapture('number_small', instances)
-            repeat_action = BasicAction('repeat', argument)
+            repeat_action = BasicAction('repeat', [argument])
             new_actions.append(repeat_action)
             new_name += ' ' + argument.compute_command_component()
         else:
