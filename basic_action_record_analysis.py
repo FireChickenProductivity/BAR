@@ -222,15 +222,11 @@ def compute_repeat_simplified_command(command):
     return new_command
 
 def compute_recommendations_from_record(record, max_command_chain_considered = 100):
-    command_set: CommandSet = CommandSet()
-    for command in record:
-        simplified_command = compute_repeat_simplified_command(command)
-        command_set.process_command_usage(simplified_command)
-    
+    command_set: CommandSet = CommandSet()    
     for roll in range(len(record) - 1):
-        rolling_command: Command = record[roll].copy()
+        rolling_command: Command = Command("", [])
         roll_target = min(len(record), roll + max_command_chain_considered)
-        for j in range(roll + 1, roll_target):
+        for j in range(roll, roll_target):
             rolling_command.append_command(record[j])
             simplified_rolling_command = compute_repeat_simplified_command(rolling_command)
             command_set.process_command_usage(simplified_rolling_command, roll)
