@@ -21,6 +21,9 @@ class PotentialCommandInformation:
         self.number_of_times_used: int = 0
         self.total_number_of_words_dictated: int = 0
         self.number_of_actions: int = len(self.actions)
+        self.count_repetitions_appropriately_for_number_of_actions()
+        
+    def count_repetitions_appropriately_for_number_of_actions(self):
         for action in self.actions:
             argument = action.get_arguments()[0]
             if action.get_name() == 'repeat' and type(argument) == int:
