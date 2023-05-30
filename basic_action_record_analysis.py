@@ -50,10 +50,14 @@ class PotentialCommandInformation:
             number_of_words = len(words)
             self.total_number_of_words_dictated += number_of_words
             self.number_of_times_used += 1
-            self.roll = roll
+            if self.should_update_roll():
+                self.roll = roll
     
     def should_process_usage(self, roll):
-        return self.number_of_times_used == 0 or (roll is not None and roll != self.roll)
+        return self.number_of_times_used == 0 or (roll is not None and roll != self.roll) or self.roll is None
+
+    def should_update_roll(self):
+        return self.roll is not None
 
     def __repr__(self):
         return self.__str__()
