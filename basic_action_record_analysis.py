@@ -16,12 +16,13 @@ OUTPUT_FILENAME = 'recommendations.txt'
 COMMANDS_TO_IGNORE_FILENAME = 'commands_to_ignore.txt'
 
 class PotentialCommandInformation:
-    def __init__(self, actions):
+    def __init__(self, actions, roll: int = None):
         self.actions = actions
         self.number_of_times_used: int = 0
         self.total_number_of_words_dictated: int = 0
         self.number_of_actions: int = len(self.actions)
         self.count_repetitions_appropriately_for_number_of_actions()
+        self.roll = roll
         
     def count_repetitions_appropriately_for_number_of_actions(self):
         for action in self.actions:
@@ -44,12 +45,16 @@ class PotentialCommandInformation:
     def update_actions(self, new_actions):
         self.actions = new_actions
     
-    def process_usage(self, words_dictated: str):
-        words = words_dictated.split(' ')
-        number_of_words = len(words)
-        self.total_number_of_words_dictated += number_of_words
-        self.number_of_times_used += 1
+    def process_usage(self, words_dictated: str, roll: int = None):
+        if self.should_process_usage(roll):
+            words = words_dictated.split(' ')
+            number_of_words = len(words)
+            self.total_number_of_words_dictated += number_of_words
+            self.number_of_times_used += 1
     
+    def should_process_usage(self, roll):
+        return self.number_of_times_used == 0 or (roll is not None and roll != self.roll)
+
     def __repr__(self):
         return self.__str__()
     
@@ -63,15 +68,15 @@ class CommandSet:
     def insert_command(self, command, representation):
         self.commands[representation] = command
     
-    def process_command_usage(self, command, *, is_abstract_representation = False):
+    def process_command_usage(self, command, roll = None, *, is_abstract_representation = False):
         representation = CommandSet.compute_representation(command)
         if representation not in self.commands:
-            self.insert_command(PotentialCommandInformation(command.get_actions()), representation)
+            self.insert_command(PotentialCommandInformation(command.get_actions(), roll), representation)
             if not is_abstract_representation:
                 if should_make_abstract_repeat_representation(command):
                     abstract_repeat_representation = make_abstract_repeat_representation_for(command)
                     self.process_command_usage(abstract_repeat_representation, is_abstract_representation = True)
-        self.commands[representation].process_usage(command.get_name())
+        self.commands[representation].process_usage(command.get_name(), roll)
 
     @staticmethod
     def compute_representation(command):
@@ -225,10 +230,10 @@ def compute_recommendations_from_record(record, max_command_chain_considered = 1
     for i in range(len(record) - 1):
         rolling_command: Command = record[i].copy()
         roll_target = min(len(record), i + max_command_chain_considered)
-        for j in range(i + 1, roll_target):
-            rolling_command.append_command(record[j])
+        for roll in range(i + 1, roll_target):
+            rolling_command.append_command(record[roll])
             simplified_rolling_command = compute_repeat_simplified_command(rolling_command)
-            command_set.process_command_usage(simplified_rolling_command)
+            command_set.process_command_usage(simplified_rolling_command, roll)
         print('roll', i + 1, 'out of', len(record) - 1, 'target: ', roll_target - 1)
     recommended_commands = command_set.get_commands_meeting_condition(basic_command_filter)
     sorted_recommended_commands = sorted(recommended_commands, key = lambda command: command.get_number_of_times_used(), reverse = True)
