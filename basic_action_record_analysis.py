@@ -221,7 +221,7 @@ def compute_repeat_simplified_command(command):
     new_command = Command(command.get_name(), new_actions)
     return new_command
 
-def compute_recommendations_from_record(record, max_command_chain_considered = 100):
+def create_command_set_from_record(record, max_command_chain_considered, *, verbose = True):
     command_set: CommandSet = CommandSet()    
     for roll in range(len(record) - 1):
         rolling_command: Command = Command("", [])
@@ -230,7 +230,12 @@ def compute_recommendations_from_record(record, max_command_chain_considered = 1
             rolling_command.append_command(record[j])
             simplified_rolling_command = compute_repeat_simplified_command(rolling_command)
             command_set.process_command_usage(simplified_rolling_command, roll)
-        print('roll', roll + 1, 'out of', len(record) - 1, 'target: ', roll_target - 1)
+        if verbose:
+            print('roll', roll + 1, 'out of', len(record) - 1, 'target: ', roll_target - 1)
+    return command_set
+
+def compute_recommendations_from_record(record, max_command_chain_considered = 100):
+    command_set = create_command_set_from_record(record, max_command_chain_considered)
     recommended_commands = command_set.get_commands_meeting_condition(basic_command_filter)
     sorted_recommended_commands = sorted(recommended_commands, key = lambda command: command.get_number_of_times_used(), reverse = True)
     return sorted_recommended_commands
