@@ -32,7 +32,7 @@ class BasicAction:
         return self.arguments
     
     def to_json(self) -> str:
-        return json.dumps({'name': self.name, 'arguments': self.arguments})
+        return json.dumps({'name': self.name, 'arguments': self.arguments}, cls = BasicActionEncoder)
     
     @staticmethod
     def from_json(text: str):
@@ -41,6 +41,12 @@ class BasicAction:
     
     def __eq__(self, other) -> bool:
         return other is not None and self.name == other.name and self.arguments == other.arguments
+
+class BasicActionEncoder(json.JSONEncoder):
+    def default(self, object):
+        if isinstance(object, TalonCapture):
+            return object.to_json()
+        return json.JSONEncoder.default(self, object)
 
 def compute_talon_script_boolean_value(value: bool):
     if value:
