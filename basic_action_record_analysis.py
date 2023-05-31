@@ -230,8 +230,8 @@ def compute_repeat_simplified_command(command):
 
 def create_command_set_from_record(record, max_command_chain_considered, *, verbose = True):
     command_set: CommandSet = CommandSet()    
-    for roll in range(len(record) - 1):
-        rolling_command: Command = Command("", [])
+    for roll in range(len(record)):
+        rolling_command: Command = Command(None, [])
         roll_target = min(len(record), roll + max_command_chain_considered)
         for j in range(roll, roll_target):
             rolling_command.append_command(record[j])
