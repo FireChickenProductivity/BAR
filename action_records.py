@@ -87,7 +87,10 @@ class Command:
         return self.actions
 
     def append_command(self, command):
-        self.name += f' {command.get_name()}'
+        if self.name is None:
+            self.name = command.get_name()
+        else:
+            self.name += f' {command.get_name()}'
         self.actions.extend(command.get_actions())
     
     def copy(self):
