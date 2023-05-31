@@ -44,17 +44,17 @@ class PotentialCommandInformation:
     def update_actions(self, new_actions):
         self.actions = new_actions
     
-    def process_usage(self, words_dictated: str, roll: int = None):
+    def process_usage(self, words_dictated: str, roll: int = None, roll_ending_index: int = None):
         if self.should_process_usage(roll):
             words = words_dictated.split(' ')
             number_of_words = len(words)
             self.total_number_of_words_dictated += number_of_words
             self.number_of_times_used += 1
             if self.should_update_roll():
-                self.roll = roll
+                self.roll = roll_ending_index
     
     def should_process_usage(self, roll):
-        return self.number_of_times_used == 0 or (roll is not None and roll != self.roll) or self.roll is None
+        return self.number_of_times_used == 0 or self.roll is None or (roll is not None and roll > self.roll)
 
     def should_update_roll(self):
         return self.roll is not None
@@ -72,15 +72,15 @@ class CommandSet:
     def insert_command(self, command, representation):
         self.commands[representation] = command
     
-    def process_command_usage(self, command, roll = None, *, is_abstract_representation = False):
+    def process_command_usage(self, command, roll = None, roll_ending_index = None, *, is_abstract_representation = False):
         representation = CommandSet.compute_representation(command)
         if representation not in self.commands:
-            self.insert_command(PotentialCommandInformation(command.get_actions(), roll), representation)
+            self.insert_command(PotentialCommandInformation(command.get_actions(), roll_ending_index), representation)
             if not is_abstract_representation:
                 if should_make_abstract_repeat_representation(command):
                     abstract_repeat_representation = make_abstract_repeat_representation_for(command)
-                    self.process_command_usage(abstract_repeat_representation, roll, is_abstract_representation = True)
-        self.commands[representation].process_usage(command.get_name(), roll)
+                    self.process_command_usage(abstract_repeat_representation, roll, roll_ending_index, is_abstract_representation = True)
+        self.commands[representation].process_usage(command.get_name(), roll, roll_ending_index)
 
     @staticmethod
     def compute_representation(command):
@@ -233,10 +233,10 @@ def create_command_set_from_record(record, max_command_chain_considered, *, verb
     for roll in range(len(record)):
         rolling_command: Command = Command(None, [])
         roll_target = min(len(record), roll + max_command_chain_considered)
-        for j in range(roll, roll_target):
-            rolling_command.append_command(record[j])
+        for roll_ending_index in range(roll, roll_target):
+            rolling_command.append_command(record[roll_ending_index])
             simplified_rolling_command = compute_repeat_simplified_command(rolling_command)
-            command_set.process_command_usage(simplified_rolling_command, roll)
+            command_set.process_command_usage(simplified_rolling_command, roll, roll_ending_index)
         if verbose:
             print('roll', roll + 1, 'out of', len(record) - 1, 'target: ', roll_target - 1)
     return command_set
