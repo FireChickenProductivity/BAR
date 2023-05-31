@@ -89,6 +89,38 @@ class TestCommandSimplification(unittest.TestCase):
 
         self.assertEqual(simplified_command.get_actions(), expected_command.get_actions())
 
+class TestGeneratingCommandSetFromRecord(unittest.TestCase):
+    def test_can_handle_simple_record(self):
+        record = generate_simple_command_record()
+        command_set = create_command_set_from_record(record, 100, verbose = True)
+
+        rain_information = generate_potential_command_information_with_uses(generate_rain_as_down_command().get_actions(), ['rain'])
+        copy_all_information = generate_potential_command_information_with_uses(generate_copy_all_command().get_actions(), ['copy all'])
+        air_information = generate_potential_command_information_with_uses(generate_press_a_command().get_actions(), ['air'])
+        rain_copy_all_information = generate_potential_command_information_with_uses(generate_multiple_key_pressing_actions(['down', 'ctrl-a', 'ctrl-c']), ['rain copy all'])
+        rain_copy_all_air_information = generate_potential_command_information_with_uses(generate_multiple_key_pressing_actions(['down', 'ctrl-a', 'ctrl-c', 'a']), ['rain copy all air'])
+        copy_all_air_information = generate_potential_command_information_with_uses(generate_multiple_key_pressing_actions(['ctrl-a', 'ctrl-c', 'a']), ['copy all air'])
+
+        expected_command_information = [rain_information, copy_all_information, air_information, 
+                                        rain_copy_all_information, rain_copy_all_air_information, copy_all_air_information]
+        self.assertTrue(command_set_matches_expected_potential_command_information(command_set, expected_command_information))
+
+def command_set_matches_expected_potential_command_information(command_set, expected):
+    if command_set.get_size() != len(expected):
+        print(f'Incorrect size! Expected {len(expected)} but received {command_set.get_size()}')
+        print('Received: ', str(command_set))
+        return False
+    for command_information in expected:
+        matching_command_information = get_command_set_information_matching_actions(command_set, command_information.get_actions())
+        if not potential_command_informations_match(matching_command_information, command_information):
+            print(f'Potential commands do not match: Received: {matching_command_information} Expected: {command_information}')
+            return False
+    return True
+
+def generate_simple_command_record():
+    record = [generate_rain_as_down_command(), generate_copy_all_command(), generate_press_a_command()]
+    return record
+
 def get_command_set_information_matching_actions(command_set, actions):
     def search_condition(command):
         return command.get_actions() == actions
@@ -128,6 +160,9 @@ def generate_copy_all_action_list():
 
 def generate_copy_all_keystroke_list():
     return ['ctrl-a', 'ctrl-c']
+
+def generate_rain_as_down_command():
+    return generate_key_pressing_command('rain', 'down')
 
 def generate_multiple_key_pressing_command(name: str, keystrokes):
     actions = generate_multiple_key_pressing_actions(keystrokes)
