@@ -63,9 +63,9 @@ class PotentialCommandInformation:
         return self.__str__()
     
     def __str__(self):
-        return f'actions: {CommandSet.compute_representation(self)}, number of times used: {self.number_of_times_used}, total number of words dictated: {self.total_number_of_words_dictated}'
+        return f'actions: {CommandInformationSet.compute_representation(self)}, number of times used: {self.number_of_times_used}, total number of words dictated: {self.total_number_of_words_dictated}'
 
-class CommandSet:
+class CommandInformationSet:
     def __init__(self):
         self.commands = {}
     
@@ -73,7 +73,7 @@ class CommandSet:
         self.commands[representation] = command
     
     def process_command_usage(self, command, roll = None, roll_ending_index = None, *, is_abstract_representation = False):
-        representation = CommandSet.compute_representation(command)
+        representation = CommandInformationSet.compute_representation(command)
         if representation not in self.commands:
             self.insert_command(PotentialCommandInformation(command.get_actions(), roll_ending_index), representation)
             if not is_abstract_representation:
@@ -99,7 +99,7 @@ class CommandSet:
         return representation in self.commands
     
     def contains_command(self, command):
-        representation = CommandSet.compute_representation(command)
+        representation = CommandInformationSet.compute_representation(command)
         return self.contains_command_with_representation(representation)
 
     def get_size(self):
@@ -113,6 +113,20 @@ class CommandSet:
         for command in self.commands.values():
             representation += str(command) + '\n'
         return representation
+
+class ActionSequenceSet:
+    def __init__(self):
+        self.set = set()
+    
+    def insert(self, actions):
+        representation = compute_string_representation_of_actions(actions)
+        self.set.add(representation)
+    
+    def contains(self, actions):
+        return compute_string_representation_of_actions(actions) in self.set
+    
+    def contains_command_actions(self, command):
+        return self.contains(command.get_actions())
 
 def compute_string_representation_of_actions(actions):
     representation = ''
@@ -173,7 +187,7 @@ def create_file_at_directory_if_nonexistent(directory, file):
 def read_commands_to_ignore(directory):
     create_file_at_directory_if_nonexistent(directory, COMMANDS_TO_IGNORE_FILENAME)
     path = os.path.join(directory, COMMANDS_TO_IGNORE_FILENAME)
-    commands = CommandSet()
+    commands = ActionSequenceSet()
     current_command_actions = []
     with open(path, 'r') as file:
         line = file.readline()
@@ -182,16 +196,16 @@ def read_commands_to_ignore(directory):
             if line_without_trailing_newline:
                 current_command_actions.append(BasicAction.from_json(line_without_trailing_newline))
             else:
-                commands.process_command_usage(Command('', current_command_actions))
+                commands.insert(current_command_actions)
                 current_command_actions = []
             line = file.readline()
         if current_command_actions:
-            commands.process_command_usage(Command('', current_command_actions))
+            commands.insert(current_command_actions)
     return commands
 
 def compute_record_without_stuff_to_ignore(directory, record):
     commands_to_ignore = read_commands_to_ignore(directory)
-    filtered_record = [command for command in record if not commands_to_ignore.contains_command(command)]
+    filtered_record = [command for command in record if not commands_to_ignore.contains_command_actions(command)]
     return filtered_record
 
 def obtain_file_record(directory):
@@ -229,7 +243,7 @@ def compute_repeat_simplified_command(command):
     return new_command
 
 def create_command_set_from_record(record, max_command_chain_considered, *, verbose = True):
-    command_set: CommandSet = CommandSet()    
+    command_set: CommandInformationSet = CommandInformationSet()    
     for roll in range(len(record)):
         rolling_command: Command = Command(None, [])
         roll_target = min(len(record), roll + max_command_chain_considered)
