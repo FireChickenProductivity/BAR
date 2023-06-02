@@ -89,23 +89,29 @@ class CommandInformationSet:
     def process_command_usage(self, command, chain = None, chain_ending_index = None, *, is_abstract_representation = False):
         representation = CommandInformationSet.compute_representation(command)
         if representation not in self.commands:
-            self.insert_command(PotentialCommandInformation(command.get_actions(), chain_ending_index), representation)
-            if not is_abstract_representation:
-                if should_make_abstract_repeat_representation(command):
-                    abstract_repeat_representation = make_abstract_repeat_representation_for(command)
-                    self.process_command_usage(abstract_repeat_representation, chain, chain_ending_index, is_abstract_representation = True)
+            self.insert_needed_commands(command, chain, chain_ending_index, representation, is_abstract_representation = is_abstract_representation)
         self.commands[representation].process_usage(command.get_name(), chain, chain_ending_index)
     
-    def process_chain_usage(self, record, chain, max_command_chain_considered, verbose = False):
-        command_chain: CommandChain = CommandChain(None, [], chain)
-        chain_target = min(len(record), chain + max_command_chain_considered)
-        for chain_ending_index in range(chain, chain_target): self.process_partial_chain_usage(record, command_chain, chain_ending_index)
-        if verbose: print('chain', chain + 1, 'out of', len(record) - 1, 'target: ', chain_target - 1)
+    def insert_needed_commands(self, command, chain, chain_ending_index, representation, is_abstract_representation):
+        self.insert_command(PotentialCommandInformation(command.get_actions(), chain_ending_index), representation)
+        if not is_abstract_representation:
+            self.handle_needed_abstract_commands(command, chain, chain_ending_index)
+
+    def handle_needed_abstract_commands(self, command, chain, chain_ending_index):
+        if should_make_abstract_repeat_representation(command):
+            abstract_repeat_representation = make_abstract_repeat_representation_for(command)
+            self.process_command_usage(abstract_repeat_representation, chain, chain_ending_index, is_abstract_representation = True)
 
     def process_partial_chain_usage(self, record, command_chain, chain_ending_index):
         command_chain.append_command(record[chain_ending_index])
         simplified_chaining_command = compute_repeat_simplified_command(command_chain.get_command())
         self.process_command_usage(simplified_chaining_command, command_chain.get_chain_number(), chain_ending_index)
+
+    def process_chain_usage(self, record, chain, max_command_chain_considered, verbose = False):
+        command_chain: CommandChain = CommandChain(None, [], chain)
+        chain_target = min(len(record), chain + max_command_chain_considered)
+        for chain_ending_index in range(chain, chain_target): self.process_partial_chain_usage(record, command_chain, chain_ending_index)
+        if verbose: print('chain', chain + 1, 'out of', len(record) - 1, 'target: ', chain_target - 1)
 
     @staticmethod
     def compute_representation(command):
