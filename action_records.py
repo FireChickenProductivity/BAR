@@ -85,6 +85,18 @@ class Command:
     
     def get_actions(self):
         return self.actions
+    
+    def copy(self):
+        return Command(self.name, self.actions[:])
+    
+    def has_same_actions_as(self, other):
+        return self.actions == other.actions
+
+class CommandChain(Command):
+    def __init__(self, name: str, actions, chain_number: int = 0):
+        super().__init__(name, actions)
+        self.chain_number: int = chain_number
+        self.chain_size: int = 0
 
     def append_command(self, command):
         if self.name is None:
@@ -92,12 +104,16 @@ class Command:
         else:
             self.name += f' {command.get_name()}'
         self.actions.extend(command.get_actions())
+        self.chain_size += 1
     
-    def copy(self):
-        return Command(self.name, self.actions[:])
+    def get_chain_number(self):
+        return self.chain_number
     
-    def has_same_actions_as(self, other):
-        return self.actions == other.actions
+    def get_chain_ending_index(self):
+        return self.get_next_chain_index() - 1
+    
+    def get_next_chain_index(self):
+        return self.chain_number + self.chain_size
 
 COMMAND_NAME_PREFIX = 'Command: '
 
