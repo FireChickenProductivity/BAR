@@ -2,7 +2,7 @@ import math
 from pathlib import PurePath
 
 try:
-    from action_records import BasicAction, read_file_record, Command, TalonCapture
+    from action_records import BasicAction, read_file_record, Command, TalonCapture, CommandChain
 except ImportError:
     pass
 import os
@@ -65,20 +65,6 @@ class PotentialCommandInformation:
     def __str__(self):
         return f'actions: {CommandInformationSet.compute_representation(self)}, number of times used: {self.number_of_times_used}, total number of words dictated: {self.total_number_of_words_dictated}'
 
-class CommandChain:
-    def __init__(self, name: str, actions, chain_number):
-        self.command = Command(name, actions)
-        self.chain_number: int = chain_number
-
-    def append_command(self, command):
-        self.command.append_command(command)
-    
-    def get_command(self):
-        return self.command
-    
-    def get_chain_number(self):
-        return self.chain_number
-
 class CommandInformationSet:
     def __init__(self):
         self.commands = {}
@@ -102,15 +88,15 @@ class CommandInformationSet:
             abstract_repeat_representation = make_abstract_repeat_representation_for(command)
             self.process_command_usage(abstract_repeat_representation, chain, chain_ending_index, is_abstract_representation = True)
 
-    def process_partial_chain_usage(self, record, command_chain, chain_ending_index):
-        command_chain.append_command(record[chain_ending_index])
-        simplified_chaining_command = compute_repeat_simplified_command(command_chain.get_command())
-        self.process_command_usage(simplified_chaining_command, command_chain.get_chain_number(), chain_ending_index)
+    def process_partial_chain_usage(self, record, command_chain):
+        command_chain.append_command(record[command_chain.get_next_chain_index()])
+        simplified_chaining_command = compute_repeat_simplified_command(command_chain)
+        self.process_command_usage(simplified_chaining_command, command_chain.get_chain_number(), command_chain.get_chain_ending_index())
 
     def process_chain_usage(self, record, chain, max_command_chain_considered, verbose = False):
         command_chain: CommandChain = CommandChain(None, [], chain)
         chain_target = min(len(record), chain + max_command_chain_considered)
-        for chain_ending_index in range(chain, chain_target): self.process_partial_chain_usage(record, command_chain, chain_ending_index)
+        for chain_ending_index in range(chain, chain_target): self.process_partial_chain_usage(record, command_chain)
         if verbose: print('chain', chain + 1, 'out of', len(record) - 1, 'target: ', chain_target - 1)
 
     @staticmethod
