@@ -15,13 +15,13 @@ OUTPUT_FILENAME = 'recommendations.txt'
 COMMANDS_TO_IGNORE_FILENAME = 'commands_to_ignore.txt'
 
 class PotentialCommandInformation:
-    def __init__(self, actions, roll: int = None):
+    def __init__(self, actions, chain: int = None):
         self.actions = actions
         self.number_of_times_used: int = 0
         self.total_number_of_words_dictated: int = 0
         self.number_of_actions: int = len(self.actions)
         self.count_repetitions_appropriately_for_number_of_actions()
-        self.roll = roll
+        self.chain = chain
         
     def count_repetitions_appropriately_for_number_of_actions(self):
         for action in self.actions:
@@ -44,20 +44,20 @@ class PotentialCommandInformation:
     def update_actions(self, new_actions):
         self.actions = new_actions
     
-    def process_usage(self, words_dictated: str, roll: int = None, roll_ending_index: int = None):
-        if self.should_process_usage(roll):
+    def process_usage(self, words_dictated: str, chain: int = None, chain_ending_index: int = None):
+        if self.should_process_usage(chain):
             words = words_dictated.split(' ')
             number_of_words = len(words)
             self.total_number_of_words_dictated += number_of_words
             self.number_of_times_used += 1
-            if self.should_update_roll():
-                self.roll = roll_ending_index
+            if self.should_update_chain():
+                self.chain = chain_ending_index
     
-    def should_process_usage(self, roll):
-        return self.number_of_times_used == 0 or self.roll is None or (roll is not None and roll > self.roll)
+    def should_process_usage(self, chain):
+        return self.number_of_times_used == 0 or self.chain is None or (chain is not None and chain > self.chain)
 
-    def should_update_roll(self):
-        return self.roll is not None
+    def should_update_chain(self):
+        return self.chain is not None
 
     def __repr__(self):
         return self.__str__()
@@ -65,22 +65,47 @@ class PotentialCommandInformation:
     def __str__(self):
         return f'actions: {CommandInformationSet.compute_representation(self)}, number of times used: {self.number_of_times_used}, total number of words dictated: {self.total_number_of_words_dictated}'
 
+class CommandChain:
+    def __init__(self, name: str, actions, chain_number):
+        self.command = Command(name, actions)
+        self.chain_number: int = chain_number
+
+    def append_command(self, command):
+        self.command.append_command(command)
+    
+    def get_command(self):
+        return self.command
+    
+    def get_chain_number(self):
+        return self.chain_number
+
 class CommandInformationSet:
     def __init__(self):
         self.commands = {}
-    
+
     def insert_command(self, command, representation):
         self.commands[representation] = command
     
-    def process_command_usage(self, command, roll = None, roll_ending_index = None, *, is_abstract_representation = False):
+    def process_command_usage(self, command, chain = None, chain_ending_index = None, *, is_abstract_representation = False):
         representation = CommandInformationSet.compute_representation(command)
         if representation not in self.commands:
-            self.insert_command(PotentialCommandInformation(command.get_actions(), roll_ending_index), representation)
+            self.insert_command(PotentialCommandInformation(command.get_actions(), chain_ending_index), representation)
             if not is_abstract_representation:
                 if should_make_abstract_repeat_representation(command):
                     abstract_repeat_representation = make_abstract_repeat_representation_for(command)
-                    self.process_command_usage(abstract_repeat_representation, roll, roll_ending_index, is_abstract_representation = True)
-        self.commands[representation].process_usage(command.get_name(), roll, roll_ending_index)
+                    self.process_command_usage(abstract_repeat_representation, chain, chain_ending_index, is_abstract_representation = True)
+        self.commands[representation].process_usage(command.get_name(), chain, chain_ending_index)
+    
+    def process_chain_usage(self, record, chain, max_command_chain_considered, verbose = False):
+        command_chain: CommandChain = CommandChain(None, [], chain)
+        chain_target = min(len(record), chain + max_command_chain_considered)
+        for chain_ending_index in range(chain, chain_target): self.process_partial_chain_usage(record, command_chain, chain_ending_index)
+        if verbose: print('chain', chain + 1, 'out of', len(record) - 1, 'target: ', chain_target - 1)
+
+    def process_partial_chain_usage(self, record, command_chain, chain_ending_index):
+        command_chain.append_command(record[chain_ending_index])
+        simplified_chaining_command = compute_repeat_simplified_command(command_chain.get_command())
+        self.process_command_usage(simplified_chaining_command, command_chain.get_chain_number(), chain_ending_index)
 
     @staticmethod
     def compute_representation(command):
@@ -242,21 +267,13 @@ def compute_repeat_simplified_command(command):
     new_command = Command(command.get_name(), new_actions)
     return new_command
 
-def create_command_set_from_record(record, max_command_chain_considered, *, verbose = True):
+def create_command_information_set_from_record(record, max_command_chain_considered, *, verbose = True):
     command_set: CommandInformationSet = CommandInformationSet()    
-    for roll in range(len(record)):
-        rolling_command: Command = Command(None, [])
-        roll_target = min(len(record), roll + max_command_chain_considered)
-        for roll_ending_index in range(roll, roll_target):
-            rolling_command.append_command(record[roll_ending_index])
-            simplified_rolling_command = compute_repeat_simplified_command(rolling_command)
-            command_set.process_command_usage(simplified_rolling_command, roll, roll_ending_index)
-        if verbose:
-            print('roll', roll + 1, 'out of', len(record) - 1, 'target: ', roll_target - 1)
+    for chain in range(len(record)): command_set.process_chain_usage(record, chain, max_command_chain_considered, verbose)
     return command_set
 
 def compute_recommendations_from_record(record, max_command_chain_considered = 100):
-    command_set = create_command_set_from_record(record, max_command_chain_considered)
+    command_set = create_command_information_set_from_record(record, max_command_chain_considered)
     recommended_commands = command_set.get_commands_meeting_condition(basic_command_filter)
     sorted_recommended_commands = sorted(recommended_commands, key = lambda command: command.get_number_of_times_used(), reverse = True)
     return sorted_recommended_commands
