@@ -43,8 +43,8 @@ class TestPotentialCommandInformation(unittest.TestCase):
 
 class TestCommandSet(unittest.TestCase):
     def test_command_set_with_single_command_used_once_gives_correct_information(self):
-        command_set = CommandSet()
-        command = generate_copy_all_command()
+        command_set = CommandInformationSet()
+        command = generate_copy_all_command_chain(0, 0)
         command_set.process_command_usage(command)
         potential_command_information = command_set.get_commands_meeting_condition(return_true)
         self.assertEqual(len(potential_command_information), 1)
@@ -54,45 +54,45 @@ class TestCommandSet(unittest.TestCase):
         self.assertEqual(command_information.get_number_of_times_used(), 1)
     
     def test_command_set_handles_multiple_commands_with_multiple_uses(self):
-        command_set = CommandSet()
+        command_set = CommandInformationSet()
         press_a = generate_press_a_command()
         copy_all = generate_copy_all_command()
-        
-        command_set.process_command_usage(press_a)
-        command_set.process_command_usage(copy_all)
-        command_set.process_command_usage(copy_all)
-        command_set.process_command_usage(press_a)
-        command_set.process_command_usage(press_a)
+        print('starting')
+        command_set.process_command_usage(generate_press_a_command_chain(0, 0))
+        command_set.process_command_usage(generate_copy_all_command_chain(1, 1))
+        command_set.process_command_usage(generate_copy_all_command_chain(2, 2))
+        command_set.process_command_usage(generate_press_a_command_chain(3, 3))
+        command_set.process_command_usage(generate_press_a_command_chain(4, 4))
 
         expected_press_a_information = generate_potential_command_information_with_uses(generate_press_a_action_list(), [press_a.get_name()]*3)
         expected_copy_all_information = generate_potential_command_information_with_uses(generate_copy_all_action_list(), [copy_all.get_name()]*2)
         press_a_information = get_command_set_information_matching_actions(command_set, press_a.get_actions())
         copy_all_information = get_command_set_information_matching_actions(command_set, copy_all.get_actions())
-
+        
         self.assertTrue(potential_command_informations_match(press_a_information, expected_press_a_information))
         self.assertTrue(potential_command_informations_match(copy_all_information, expected_copy_all_information))
 
 class TestCommandSimplification(unittest.TestCase):
     def test_repeat_simplify_command_does_nothing_to_press_a(self):
-        command = generate_press_a_command()
-        expected_command = command.copy()
-        simplified_command = compute_repeat_simplified_command(command)
+        command = generate_press_a_command_chain()
+        expected_command = generate_press_a_command_chain()
+        simplified_command = compute_repeat_simplified_command_chain(command)
         self.assertEqual(simplified_command.get_actions(), expected_command.get_actions())
     
     def test_repeat_simplify_command_handles_multiple_repetitions(self):
-        command = Command('test', generate_multiple_key_pressing_actions(['b', 'b', 'c', 'd', 'd', 'd', 'a', 'l', 'l']))
+        command = CommandChain('test', generate_multiple_key_pressing_actions(['b', 'b', 'c', 'd', 'd', 'd', 'a', 'l', 'l']))
         expected_actions = [generate_key_press_action('b'), BasicAction('repeat', [1]), generate_key_press_action('c'), generate_key_press_action('d'), BasicAction('repeat', [2]), 
         generate_key_press_action('a'), generate_key_press_action('l'), BasicAction('repeat', [1])]
-        expected_command = Command('test', expected_actions)
+        expected_command = CommandChain('test', expected_actions)
 
-        simplified_command = compute_repeat_simplified_command(command)
+        simplified_command = compute_repeat_simplified_command_chain(command)
 
         self.assertEqual(simplified_command.get_actions(), expected_command.get_actions())
 
 class TestGeneratingCommandSetFromRecord(unittest.TestCase):
     def test_can_handle_simple_record(self):
         record = generate_simple_command_record()
-        command_set = create_command_set_from_record(record, 100, verbose = True)
+        command_set = create_command_information_set_from_record(record, 100, verbose = True)
 
         rain_information = generate_potential_command_information_with_uses(generate_rain_as_down_command().get_actions(), ['rain'])
         copy_all_information = generate_potential_command_information_with_uses(generate_copy_all_command().get_actions(), ['copy all'])
@@ -143,6 +143,9 @@ def return_true(value):
 def generate_potential_command_information_on_press_a():
     return PotentialCommandInformation(generate_press_a_action_list())
 
+def generate_press_a_command_chain(chain: int = 0, chain_ending_index: int = 0):
+    return CommandChain('air', generate_press_a_action_list(), chain, chain_ending_index)
+
 def generate_press_a_command():
     return Command('air', generate_press_a_action_list())
 
@@ -151,6 +154,10 @@ def generate_press_a_action_list():
 
 def generate_press_a_action():
     return generate_key_press_action('a')
+
+def generate_copy_all_command_chain(chain, chain_ending_index):
+    copy_all_command = generate_copy_all_command()
+    return CommandChain(copy_all_command.get_name(), copy_all_command.get_actions(), chain, chain_ending_index)
 
 def generate_copy_all_command():
     return generate_multiple_key_pressing_command('copy all', generate_copy_all_keystroke_list())
