@@ -54,15 +54,16 @@ def compute_talon_script_boolean_value(value: bool):
     return 0
 
 class TalonCapture:
-    def __init__(self, name: str, instance: int):
+    def __init__(self, name: str, instance: int, postfix: str = ''):
         self.name = name
         self.instance = instance
+        self.postfix = postfix
     
     def __repr__(self):
         return self.__str__()
     
     def __str__(self):
-        return self.name + '_' + str(self.instance)
+        return self.name + '_' + str(self.instance) + self.postfix
     
     def compute_command_component(self):
         return f'<{self.name}>'
