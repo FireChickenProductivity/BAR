@@ -2,7 +2,7 @@ import math
 from pathlib import PurePath
 
 try:
-    from action_records import BasicAction, read_file_record, Command, TalonCapture, CommandChain
+    from action_records import BasicAction, read_file_record, TalonCapture, CommandChain
 except ImportError:
     pass
 import os
@@ -72,26 +72,26 @@ class CommandInformationSet:
     def insert_command(self, command, representation):
         self.commands[representation] = command
     
-    def process_command_usage(self, command, chain = None, chain_ending_index = None, *, is_abstract_representation = False):
-        representation = CommandInformationSet.compute_representation(command)
+    def process_command_usage(self, command_chain, *, is_abstract_representation = False):
+        representation = CommandInformationSet.compute_representation(command_chain)
         if representation not in self.commands:
-            self.insert_needed_commands(command, chain, chain_ending_index, representation, is_abstract_representation = is_abstract_representation)
-        self.commands[representation].process_usage(command.get_name(), chain, chain_ending_index)
+            self.insert_needed_commands(command_chain, representation, is_abstract_representation = is_abstract_representation)
+        self.commands[representation].process_usage(command_chain.get_name(), command_chain.get_chain_number(), command_chain.get_chain_ending_index())
     
-    def insert_needed_commands(self, command, chain, chain_ending_index, representation, is_abstract_representation):
-        self.insert_command(PotentialCommandInformation(command.get_actions(), chain_ending_index), representation)
+    def insert_needed_commands(self, command_chain, representation, is_abstract_representation):
+        self.insert_command(PotentialCommandInformation(command_chain.get_actions(), command_chain.get_chain_ending_index()), representation)
         if not is_abstract_representation:
-            self.handle_needed_abstract_commands(command, chain, chain_ending_index)
+            self.handle_needed_abstract_commands(command_chain)
 
-    def handle_needed_abstract_commands(self, command, chain, chain_ending_index):
-        if should_make_abstract_repeat_representation(command):
-            abstract_repeat_representation = make_abstract_repeat_representation_for(command)
-            self.process_command_usage(abstract_repeat_representation, chain, chain_ending_index, is_abstract_representation = True)
+    def handle_needed_abstract_commands(self, command_chain):
+        if should_make_abstract_repeat_representation(command_chain):
+            abstract_repeat_representation = make_abstract_repeat_representation_for(command_chain)
+            self.process_command_usage(abstract_repeat_representation, is_abstract_representation = True)
 
     def process_partial_chain_usage(self, record, command_chain):
         command_chain.append_command(record[command_chain.get_next_chain_index()])
-        simplified_chaining_command = compute_repeat_simplified_command(command_chain)
-        self.process_command_usage(simplified_chaining_command, command_chain.get_chain_number(), command_chain.get_chain_ending_index())
+        simplified_chaining_command = compute_repeat_simplified_command_chain(command_chain)
+        self.process_command_usage(simplified_chaining_command)
 
     def process_chain_usage(self, record, chain, max_command_chain_considered, verbose = False):
         command_chain: CommandChain = CommandChain(None, [], chain)
@@ -157,11 +157,11 @@ def should_make_abstract_repeat_representation(command):
         return False
     return any(action.get_name() == 'repeat' for action in actions)
 
-def make_abstract_repeat_representation_for(command):
-    actions = command.get_actions()
+def make_abstract_repeat_representation_for(command_chain):
+    actions = command_chain.get_actions()
     instances = 0
     new_actions = []
-    new_name = command.get_name()
+    new_name = command_chain.get_name()
     for action in actions:
         if action.get_name() == 'repeat':
             instances += 1
@@ -171,7 +171,7 @@ def make_abstract_repeat_representation_for(command):
             new_name += ' ' + argument.compute_command_component()
         else:
             new_actions.append(action)
-    new_command = Command(new_name, new_actions)
+    new_command = CommandChain(new_name, new_actions, command_chain.get_chain_number(), command_chain.get_size())
     return new_command
 
 def basic_command_filter(command: PotentialCommandInformation):
@@ -240,11 +240,11 @@ def output_recommendations(recommended_commands, output_directory):
                 file.write('\t' + action.compute_talon_script() + '\n')
             file.write('\n\n')
 
-def compute_repeat_simplified_command(command):
+def compute_repeat_simplified_command_chain(command_chain):
     new_actions = []
     last_non_repeat_action = None
     repeat_count: int = 0
-    for action in command.get_actions():
+    for action in command_chain.get_actions():
         if action == last_non_repeat_action:
             repeat_count += 1
         else:
@@ -256,7 +256,7 @@ def compute_repeat_simplified_command(command):
     if repeat_count > 0:
         new_actions.append(BasicAction('repeat', [repeat_count]))
         repeat_count = 0
-    new_command = Command(command.get_name(), new_actions)
+    new_command = CommandChain(command_chain.get_name(), new_actions, command_chain.get_chain_number(), command_chain.get_size())
     return new_command
 
 def create_command_information_set_from_record(record, max_command_chain_considered, *, verbose = True):
