@@ -165,7 +165,7 @@ def make_abstract_repeat_representation_for(command):
     for action in actions:
         if action.get_name() == 'repeat':
             instances += 1
-            argument = TalonCapture('number_small', instances)
+            argument = TalonCapture('number_small', instances, ' - 1')
             repeat_action = BasicAction('repeat', [argument])
             new_actions.append(repeat_action)
             new_name += ' ' + argument.compute_command_component()
