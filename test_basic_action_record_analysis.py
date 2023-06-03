@@ -57,12 +57,12 @@ class TestCommandSet(unittest.TestCase):
         command_set = CommandInformationSet()
         press_a = generate_press_a_command()
         copy_all = generate_copy_all_command()
-        print('starting')
-        command_set.process_command_usage(generate_press_a_command_chain(0, 0))
+
+        command_set.process_command_usage(generate_press_a_command_chain(0, 1))
         command_set.process_command_usage(generate_copy_all_command_chain(1, 1))
-        command_set.process_command_usage(generate_copy_all_command_chain(2, 2))
-        command_set.process_command_usage(generate_press_a_command_chain(3, 3))
-        command_set.process_command_usage(generate_press_a_command_chain(4, 4))
+        command_set.process_command_usage(generate_copy_all_command_chain(2, 1))
+        command_set.process_command_usage(generate_press_a_command_chain(3, 1))
+        command_set.process_command_usage(generate_press_a_command_chain(4, 1))
 
         expected_press_a_information = generate_potential_command_information_with_uses(generate_press_a_action_list(), [press_a.get_name()]*3)
         expected_copy_all_information = generate_potential_command_information_with_uses(generate_copy_all_action_list(), [copy_all.get_name()]*2)
