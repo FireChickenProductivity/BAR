@@ -94,10 +94,10 @@ class Command:
         return self.actions == other.actions
 
 class CommandChain(Command):
-    def __init__(self, name: str, actions, chain_number: int = 0):
+    def __init__(self, name: str, actions, chain_number: int = 0, chain_size: int = 0):
         super().__init__(name, actions)
         self.chain_number: int = chain_number
-        self.chain_size: int = 0
+        self.chain_size: int = chain_size
 
     def append_command(self, command):
         if self.name is None:
@@ -115,6 +115,9 @@ class CommandChain(Command):
     
     def get_next_chain_index(self):
         return self.chain_number + self.chain_size
+    
+    def get_size(self):
+        return self.chain_size
 
 COMMAND_NAME_PREFIX = 'Command: '
 
