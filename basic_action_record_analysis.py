@@ -42,6 +42,9 @@ class PotentialCommandInformation:
 
     def get_actions(self):
         return self.actions
+    
+    def is_abstract(self):
+        return False
 
     def process_usage(self, command_chain):
         if self.should_process_usage(command_chain.get_chain_number()):
@@ -61,6 +64,22 @@ class PotentialCommandInformation:
     
     def __str__(self):
         return f'actions: {CommandInformationSet.compute_representation(self)}, number of times used: {self.number_of_times_used}, total number of words dictated: {self.total_number_of_words_dictated}'
+
+class PotentialAbstractCommandInformation(PotentialCommandInformation):
+    def __init__(self, actions):
+        self.instantiation_set = ActionSequenceSet()
+        super().__init__(actions)
+    
+    def process_usage(self, command_chain, instantiation):
+        if self.should_process_usage(command_chain.get_chain_number()):
+            self.instantiation_set.insert(instantiation)
+            self.process_relevant_usage(command_chain)
+    
+    def get_number_of_instantiations(self):
+        return self.instantiation_set.get_size()
+    
+    def is_abstract(self):
+        return True
 
 class CommandInformationSet:
     def __init__(self):
@@ -141,6 +160,9 @@ class ActionSequenceSet:
     
     def contains_command_actions(self, command):
         return self.contains(command.get_actions())
+    
+    def get_size(self):
+        len(self.set)
 
 def compute_string_representation_of_actions(actions):
     representation = ''
