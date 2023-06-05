@@ -43,15 +43,15 @@ class PotentialCommandInformation:
     
     def update_actions(self, new_actions):
         self.actions = new_actions
-    
-    def process_usage(self, words_dictated: str, chain: int = None, chain_ending_index: int = None):
-        if self.should_process_usage(chain):
-            words = words_dictated.split(' ')
+    #command_chain.get_name(), command_chain.get_chain_number(), command_chain.get_chain_ending_index()
+    def process_usage(self, command_chain):
+        if self.should_process_usage(command_chain.get_chain_number()):
+            words = command_chain.get_name().split(' ')
             number_of_words = len(words)
             self.total_number_of_words_dictated += number_of_words
             self.number_of_times_used += 1
             if self.should_update_chain():
-                self.chain = chain_ending_index
+                self.chain = command_chain.get_chain_ending_index()
     
     def should_process_usage(self, chain):
         return self.number_of_times_used == 0 or self.chain is None or (chain is not None and chain > self.chain)
@@ -76,7 +76,7 @@ class CommandInformationSet:
         representation = CommandInformationSet.compute_representation(command_chain)
         if representation not in self.commands:
             self.insert_needed_commands(command_chain, representation, is_abstract_representation = is_abstract_representation)
-        self.commands[representation].process_usage(command_chain.get_name(), command_chain.get_chain_number(), command_chain.get_chain_ending_index())
+        self.commands[representation].process_usage(command_chain)
     
     def insert_needed_commands(self, command_chain, representation, is_abstract_representation):
         self.insert_command(PotentialCommandInformation(command_chain.get_actions(), command_chain.get_chain_ending_index()), representation)
