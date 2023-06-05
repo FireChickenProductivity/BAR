@@ -16,13 +16,13 @@ class TestPotentialCommandInformation(unittest.TestCase):
 
     def test_potential_command_information_for_press_a_reports_single_usage_with_single_usage(self):
         potential_command_information = generate_potential_command_information_on_press_a()
-        potential_command_information.process_usage('this is a test')
+        potential_command_information.process_usage(generate_named_press_a_command_chain('this is a test'))
         self.assertEqual(potential_command_information.get_number_of_times_used(), 1)
     
     def test_potential_command_information_for_press_a_reports_two_usages_with_two_usages(self):
         potential_command_information = generate_potential_command_information_on_press_a()
-        potential_command_information.process_usage('this is a test')
-        potential_command_information.process_usage('chicken')
+        potential_command_information.process_usage(generate_named_press_a_command_chain('this is a test', 0))
+        potential_command_information.process_usage(generate_named_press_a_command_chain('chicken', 1))
         self.assertEqual(potential_command_information.get_number_of_times_used(), 2)
 
     def test_potential_command_information_with_two_actions_has_correct_number_of_actions(self):
@@ -31,10 +31,10 @@ class TestPotentialCommandInformation(unittest.TestCase):
     def _assert_potential_command_information_for_press_a_with_words_dictated_has_specified_number_of_average_words_dictated(self, words, number):
         potential_command_information = generate_potential_command_information_on_press_a()
         if isinstance(words, str):
-            potential_command_information.process_usage(words)
+            potential_command_information.process_usage(generate_named_press_a_command_chain(words))
         else:
-            for utterance in words:
-                potential_command_information.process_usage(utterance)
+            for index, utterance in enumerate(words):
+                potential_command_information.process_usage(generate_named_press_a_command_chain(utterance, index))
         self.assertEqual(potential_command_information.get_average_words_dictated(), number)
     
     def _assert_potential_command_information_with_key_actions_has_correct_number_of_actions(self, keystrokes):
@@ -117,6 +117,9 @@ def command_set_matches_expected_potential_command_information(command_set, expe
             return False
     return True
 
+def generate_named_press_a_command_chain(name: str, number: int = 0):
+    return CommandChain(name, generate_press_a_action_list(), number, 1)
+
 def generate_simple_command_record():
     record = [generate_rain_as_down_command(), generate_copy_all_command(), generate_press_a_command()]
     return record
@@ -129,8 +132,8 @@ def get_command_set_information_matching_actions(command_set, actions):
 
 def generate_potential_command_information_with_uses(actions, invocations):        
     information = PotentialCommandInformation(actions)
-    for invocation in invocations:
-        information.process_usage(invocation)
+    for index, invocation in enumerate(invocations):
+        information.process_usage(CommandChain(invocation, actions, invocation))
     return information
         
 def potential_command_informations_match(original, other):
