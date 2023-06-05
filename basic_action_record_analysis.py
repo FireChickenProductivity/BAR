@@ -199,7 +199,10 @@ def make_abstract_repeat_representation_for(command_chain):
     return new_command
 
 def basic_command_filter(command: PotentialCommandInformation):
-    return command.get_average_words_dictated() > 1 and command.get_number_of_times_used() > 1 and (command.get_number_of_actions()/command.get_average_words_dictated() < 2 or command.get_number_of_actions()*math.sqrt(command.get_number_of_times_used()) > command.get_average_words_dictated())
+    return command.get_average_words_dictated() > 1 and command.get_number_of_times_used() > 1 and \
+            (not command.is_abstract() or command.get_number_of_instantiations() > 2) and \
+            (command.get_number_of_actions()/command.get_average_words_dictated() < 2 or \
+            command.get_number_of_actions()*math.sqrt(command.get_number_of_times_used()) > command.get_average_words_dictated())
 
 class ProgramDirectoryInvalidException(Exception):
     pass
