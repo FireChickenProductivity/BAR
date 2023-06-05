@@ -133,7 +133,7 @@ def get_command_set_information_matching_actions(command_set, actions):
 def generate_potential_command_information_with_uses(actions, invocations):        
     information = PotentialCommandInformation(actions)
     for index, invocation in enumerate(invocations):
-        information.process_usage(CommandChain(invocation, actions, invocation))
+        information.process_usage(CommandChain(invocation, actions, index))
     return information
         
 def potential_command_informations_match(original, other):
