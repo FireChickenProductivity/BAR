@@ -72,7 +72,7 @@ class PotentialAbstractCommandInformation(PotentialCommandInformation):
     
     def process_usage(self, command_chain, instantiation):
         if self.should_process_usage(command_chain.get_chain_number()):
-            self.instantiation_set.insert(instantiation)
+            self.instantiation_set.insert(instantiation.get_actions())
             self.process_relevant_usage(command_chain)
     
     def get_number_of_instantiations(self):
@@ -88,21 +88,29 @@ class CommandInformationSet:
     def insert_command(self, command, representation):
         self.commands[representation] = command
     
-    def process_command_usage(self, command_chain, *, is_abstract_representation = False):
+    def process_command_usage(self, command_chain):
         representation = CommandInformationSet.compute_representation(command_chain)
         if representation not in self.commands:
-            self.insert_needed_commands(command_chain, representation, is_abstract_representation = is_abstract_representation)
+            self.insert_command(PotentialCommandInformation(command_chain.get_actions()), representation)
         self.commands[representation].process_usage(command_chain)
+        self.handle_needed_abstract_commands(command_chain)
     
-    def insert_needed_commands(self, command_chain, representation, is_abstract_representation):
-        self.insert_command(PotentialCommandInformation(command_chain.get_actions()), representation)
-        if not is_abstract_representation:
-            self.handle_needed_abstract_commands(command_chain)
+    def process_abstract_command_usage(self, command_chain, abstract_command_chain):
+        representation = CommandInformationSet.compute_representation(abstract_command_chain)
+        if representation not in self.commands:
+            self.insert_command(PotentialAbstractCommandInformation(abstract_command_chain.get_actions()), representation)
+        self.commands[representation].process_usage(abstract_command_chain, command_chain)
 
-    def handle_needed_abstract_commands(self, command_chain):
+    def create_abstract_commands(self, command_chain):
+        commands = []
         if should_make_abstract_repeat_representation(command_chain):
             abstract_repeat_representation = make_abstract_repeat_representation_for(command_chain)
-            self.process_command_usage(abstract_repeat_representation, is_abstract_representation = True)
+            commands.append(abstract_repeat_representation)
+        return commands
+
+    def handle_needed_abstract_commands(self, command_chain):
+        abstract_commands = self.create_abstract_commands(command_chain)
+        for abstract_command in abstract_commands: self.process_abstract_command_usage(command_chain, abstract_command)
 
     def process_partial_chain_usage(self, record, command_chain):
         command_chain.append_command(record[command_chain.get_next_chain_index()])
