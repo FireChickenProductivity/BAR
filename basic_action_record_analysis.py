@@ -88,13 +88,6 @@ class CommandInformationSet:
     def insert_command(self, command, representation):
         self.commands[representation] = command
     
-    def process_command_usage(self, command_chain):
-        representation = CommandInformationSet.compute_representation(command_chain)
-        if representation not in self.commands:
-            self.insert_command(PotentialCommandInformation(command_chain.get_actions()), representation)
-        self.commands[representation].process_usage(command_chain)
-        self.handle_needed_abstract_commands(command_chain)
-    
     def process_abstract_command_usage(self, command_chain, abstract_command_chain):
         representation = CommandInformationSet.compute_representation(abstract_command_chain)
         if representation not in self.commands:
@@ -107,11 +100,18 @@ class CommandInformationSet:
             abstract_repeat_representation = make_abstract_repeat_representation_for(command_chain)
             commands.append(abstract_repeat_representation)
         return commands
-
+    
     def handle_needed_abstract_commands(self, command_chain):
         abstract_commands = self.create_abstract_commands(command_chain)
         for abstract_command in abstract_commands: self.process_abstract_command_usage(command_chain, abstract_command)
 
+    def process_command_usage(self, command_chain):
+        representation = CommandInformationSet.compute_representation(command_chain)
+        if representation not in self.commands:
+            self.insert_command(PotentialCommandInformation(command_chain.get_actions()), representation)
+        self.commands[representation].process_usage(command_chain)
+        self.handle_needed_abstract_commands(command_chain)
+    
     def process_partial_chain_usage(self, record, command_chain):
         command_chain.append_command(record[command_chain.get_next_chain_index()])
         simplified_chaining_command = compute_repeat_simplified_command_chain(command_chain)
@@ -130,10 +130,7 @@ class CommandInformationSet:
         return representation
     
     def get_commands_meeting_condition(self, condition):
-        commands_to_output = []
-        for command in self.commands.values():
-            if condition(command):
-                commands_to_output.append(command)
+        commands_to_output = [command for command in self.commands.values() if condition(command)]
         return commands_to_output
     
     def contains_command_with_representation(self, representation: str):
@@ -170,7 +167,7 @@ class ActionSequenceSet:
         return self.contains(command.get_actions())
     
     def get_size(self):
-        len(self.set)
+        return len(self.set)
 
 def compute_string_representation_of_actions(actions):
     representation = ''
@@ -263,8 +260,8 @@ def output_recommendations(recommended_commands, output_directory):
     with open(output_path, 'w') as file:
         for command in recommended_commands:
             file.write(f'#Number of times used: {command.get_number_of_times_used()}\n')
-            for action in command.get_actions():
-                file.write('\t' + action.compute_talon_script() + '\n')
+            if command.is_abstract(): file.write(f'#Number of instantiations of abstract command: {command.get_number_of_instantiations()}\n')
+            for action in command.get_actions(): file.write('\t' + action.compute_talon_script() + '\n')
             file.write('\n\n')
 
 def compute_repeat_simplified_command_chain(command_chain):
