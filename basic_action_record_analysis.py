@@ -255,16 +255,16 @@ def obtain_file_record(directory):
     filtered_record = compute_record_without_stuff_to_ignore(directory, record)
     return filtered_record
 
-def output_recommendations(recommended_commands, output_directory):
-    output_path = os.path.join(output_directory, OUTPUT_FILENAME)
-    with open(output_path, 'w') as file:
-        for command in recommended_commands: write_command_to_file(file, command)
-
 def write_command_to_file(file, command):
     file.write(f'#Number of times used: {command.get_number_of_times_used()}\n')
     if command.is_abstract(): file.write(f'#Number of instantiations of abstract command: {command.get_number_of_instantiations()}\n')
     for action in command.get_actions(): file.write('\t' + action.compute_talon_script() + '\n')
     file.write('\n\n')
+
+def output_recommendations(recommended_commands, output_directory):
+    output_path = os.path.join(output_directory, OUTPUT_FILENAME)
+    with open(output_path, 'w') as file:
+        for command in recommended_commands: write_command_to_file(file, command)
 
 def compute_repeat_simplified_command_chain(command_chain):
     new_actions = []
