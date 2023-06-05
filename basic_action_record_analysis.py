@@ -24,10 +24,12 @@ class PotentialCommandInformation:
         self.chain = None
         
     def count_repetitions_appropriately_for_number_of_actions(self):
-        for action in self.actions:
-            argument = action.get_arguments()[0]
-            if action.get_name() == 'repeat' and type(argument) == int:
-                self.number_of_actions += argument - 1
+        for action in self.actions: self.count_repetition_appropriately_for_a_number_of_actions(action)
+    
+    def count_repetition_appropriately_for_a_number_of_actions(self, action):
+        argument = action.get_arguments()[0]
+        if action.get_name() == 'repeat' and type(argument) == int:
+            self.number_of_actions += argument - 1
     
     def get_number_of_actions(self):
         return len(self.actions)
@@ -40,20 +42,19 @@ class PotentialCommandInformation:
 
     def get_actions(self):
         return self.actions
-    
-    def update_actions(self, new_actions):
-        self.actions = new_actions
 
     def process_usage(self, command_chain):
         if self.should_process_usage(command_chain.get_chain_number()):
-            words = command_chain.get_name().split(' ')
-            number_of_words = len(words)
-            self.total_number_of_words_dictated += number_of_words
-            self.number_of_times_used += 1
-            self.chain = command_chain.get_chain_ending_index()
+            self.process_relevant_usage(command_chain)
     
     def should_process_usage(self, chain):
         return self.chain is None or chain > self.chain
+
+    def process_relevant_usage(self, command_chain):
+        self.number_of_times_used += 1
+        self.chain = command_chain.get_chain_ending_index()
+        words = command_chain.get_name().split(' ')
+        self.total_number_of_words_dictated += len(words)
 
     def __repr__(self):
         return self.__str__()
