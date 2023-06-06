@@ -92,7 +92,7 @@ class TestCommandSimplification(unittest.TestCase):
 class TestGeneratingCommandSetFromRecord(unittest.TestCase):
     def test_can_handle_simple_record(self):
         record = generate_simple_command_record()
-        command_set = create_command_information_set_from_record(record, 100, verbose = True)
+        command_set = create_command_information_set_from_record(record, 100)
 
         rain_information = generate_potential_command_information_with_uses(generate_rain_as_down_command().get_actions(), ['rain'])
         copy_all_information = generate_potential_command_information_with_uses(generate_copy_all_command().get_actions(), ['copy all'])
@@ -104,6 +104,35 @@ class TestGeneratingCommandSetFromRecord(unittest.TestCase):
         expected_command_information = [rain_information, copy_all_information, air_information, 
                                         rain_copy_all_information, rain_copy_all_air_information, copy_all_air_information]
         self.assertTrue(command_set_matches_expected_potential_command_information(command_set, expected_command_information))
+
+class TestFindingProseInText(unittest.TestCase):
+    def test_can_handle_identical_text(self):
+        text = 'a'
+        self.assertTrue(is_prose_inside_inserted_text(text, text))
+
+    def test_false_given_with_empty_string_target(self):
+        print('chickenchickenchickenchickenchicken')
+        self.assertFalse(is_prose_inside_inserted_text('testing', ''))
+    
+    def test_can_handle_sub_string_match(self):
+        target = 'this is a test'
+        prose = 'is'
+        self.assertTrue(is_prose_inside_inserted_text(prose, target))
+    
+    def test_can_handle_multiple_words(self):
+        target = 'this is a test'
+        prose = 'this is'
+        self.assertTrue(is_prose_inside_inserted_text(prose, target))
+    
+    def test_can_handle_multiple_words_with_different_separators(self):
+        target = 'this-is_____a test'
+        prose = 'this is a'
+        self.assertTrue(is_prose_inside_inserted_text(prose, target))
+    
+    def test_can_handle_multiple_cases(self):
+        target = 'ChickenEATSgrainstonight'
+        prose = 'chicken eats grains'
+        self.assertTrue(is_prose_inside_inserted_text(prose, target))
 
 def command_set_matches_expected_potential_command_information(command_set, expected):
     if command_set.get_size() != len(expected):
