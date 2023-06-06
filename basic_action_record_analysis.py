@@ -198,6 +198,19 @@ def make_abstract_repeat_representation_for(command_chain):
     new_command = CommandChain(new_name, new_actions, command_chain.get_chain_number(), command_chain.get_size())
     return new_command
 
+def filter_string(string: str, filter):
+    filtered_string = ''
+    for character in string:
+        if filter(character): filtered_string += character
+    return filtered_string
+
+def is_prose_inside_inserted_text(prose: str, text: str) -> bool:
+    text_with_letters_only = filter_string(text, lambda character: character.isalpha())
+    lowercase_text_with_letters_only = text_with_letters_only.lower()
+    lowercase_prose = prose.lower()
+    lowercase_prose_without_spaces = lowercase_prose.replace(' ', '')
+    return lowercase_prose_without_spaces in lowercase_text_with_letters_only
+
 def basic_command_filter(command: PotentialCommandInformation):
     return command.get_average_words_dictated() > 1 and command.get_number_of_times_used() > 1 and \
             (not command.is_abstract() or command.get_number_of_instantiations() > 2) and \
