@@ -198,7 +198,7 @@ def make_abstract_repeat_representation_for(command_chain):
     new_command = CommandChain(new_name, new_actions, command_chain.get_chain_number(), command_chain.get_size())
     return new_command
 
-class StringSeparation:
+class TextSeparation:
     def __init__(self, string: str, character_filter):
         self.separated_parts = []
         self.separators = []
@@ -224,25 +224,37 @@ class StringSeparation:
         self.separated_parts.append(self.current_separated_part)
         self.current_separated_part = ''
     
+    def get_separated_parts(self):
+        return self.separated_parts
+
+    def get_separators(self):
+        return self.separators
+
+class TextSeparationAnalyzer:
+    def __init__(self, text: str, character_filter):
+        self.text_separation = TextSeparation(text, character_filter)
+    
     def is_prose_in_separated_part(self, prose: str):
         lowercase_prose = prose.lower()
         words = lowercase_prose.split(' ')
-        for index in range(len(self.separated_parts)):
+        for index in range(len(self.text_separation.get_separated_parts())):
             if self.is_prose_at_separated_part_index(lowercase_prose, words, index): return True
         return False
 
     def is_prose_at_separated_part_index(self, prose: str, words, index: int):
-        if prose.replace(' ', '') in self.separated_parts[index].lower(): return True
-        if len(words) + index > len(self.separated_parts): return False
+        separated_parts = self.text_separation.get_separated_parts()
+        if prose.replace(' ', '') in separated_parts[index].lower(): return True
+        if len(words) + index > len(separated_parts): return False
         for prose_index in range(len(words)):
             word = words[prose_index]
-            separated_part: str = self.separated_parts[prose_index + index].lower()
+            separated_part: str = separated_parts[prose_index + index].lower()
             if separated_part != word and not (prose_index == 0 and separated_part.endswith(word)) and not (prose_index == len(words) - 1 and separated_part.startswith(word)): return False
         return True
 
+
 def is_prose_inside_inserted_text_with_consistent_separator(prose: str, text: str) -> bool:
-    separator = StringSeparation(text, lambda character: character.isalpha())
-    return separator.is_prose_in_separated_part(prose)
+    text_separation_analyzer = TextSeparationAnalyzer(text, lambda character: character.isalpha())
+    return text_separation_analyzer.is_prose_in_separated_part(prose)
 
 def basic_command_filter(command: PotentialCommandInformation):
     return command.get_average_words_dictated() > 1 and command.get_number_of_times_used() > 1 and \
