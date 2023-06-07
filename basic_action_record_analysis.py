@@ -198,18 +198,51 @@ def make_abstract_repeat_representation_for(command_chain):
     new_command = CommandChain(new_name, new_actions, command_chain.get_chain_number(), command_chain.get_size())
     return new_command
 
-def filter_string(string: str, filter):
-    filtered_string = ''
-    for character in string:
-        if filter(character): filtered_string += character
-    return filtered_string
+class StringSeparation:
+    def __init__(self, string: str, character_filter):
+        self.separated_parts = []
+        self.separators = []
+        self.current_separated_part = ''
+        self.current_separator = ''
+        for character in string: self._process_character(character, character_filter)
+        if not self.current_separated_part: self._add_separator()
+        if not self.current_separator: self._add_separated_part()
+    
+    def _process_character(self, character, character_filter):
+        if character_filter(character): 
+            if not self.current_separated_part: self._add_separator()
+            self.current_separated_part += character
+        else:
+            if not self.current_separator: self._add_separated_part()
+            self.current_separator += character
 
-def is_prose_inside_inserted_text(prose: str, text: str) -> bool:
-    text_with_letters_only = filter_string(text, lambda character: character.isalpha())
-    lowercase_text_with_letters_only = text_with_letters_only.lower()
-    lowercase_prose = prose.lower()
-    lowercase_prose_without_spaces = lowercase_prose.replace(' ', '')
-    return lowercase_prose_without_spaces in lowercase_text_with_letters_only
+    def _add_separator(self):
+        self.separators.append(self.current_separator)
+        self.current_separator = ''
+    
+    def _add_separated_part(self):
+        self.separated_parts.append(self.current_separated_part)
+        self.current_separated_part = ''
+    
+    def is_prose_in_separated_part(self, prose: str):
+        lowercase_prose = prose.lower()
+        words = lowercase_prose.split(' ')
+        for index in range(len(self.separated_parts)):
+            if self.is_prose_at_separated_part_index(lowercase_prose, words, index): return True
+        return False
+
+    def is_prose_at_separated_part_index(self, prose: str, words, index: int):
+        if prose.replace(' ', '') in self.separated_parts[index].lower(): return True
+        if len(words) + index > len(self.separated_parts): return False
+        for prose_index in range(len(words)):
+            word = words[prose_index]
+            separated_part: str = self.separated_parts[prose_index + index].lower()
+            if separated_part != word and not (prose_index == 0 and separated_part.endswith(word)) and not (prose_index == len(words) - 1 and separated_part.startswith(word)): return False
+        return True
+
+def is_prose_inside_inserted_text_with_consistent_separator(prose: str, text: str) -> bool:
+    separator = StringSeparation(text, lambda character: character.isalpha())
+    return separator.is_prose_in_separated_part(prose)
 
 def basic_command_filter(command: PotentialCommandInformation):
     return command.get_average_words_dictated() > 1 and command.get_number_of_times_used() > 1 and \
