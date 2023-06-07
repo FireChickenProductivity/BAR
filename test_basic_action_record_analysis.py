@@ -108,31 +108,30 @@ class TestGeneratingCommandSetFromRecord(unittest.TestCase):
 class TestFindingProseInText(unittest.TestCase):
     def test_can_handle_identical_text(self):
         text = 'a'
-        self.assertTrue(is_prose_inside_inserted_text(text, text))
+        self.assertTrue(is_prose_inside_inserted_text_with_consistent_separator(text, text))
 
     def test_false_given_with_empty_string_target(self):
-        print('chickenchickenchickenchickenchicken')
-        self.assertFalse(is_prose_inside_inserted_text('testing', ''))
+        self.assertFalse(is_prose_inside_inserted_text_with_consistent_separator('testing', ''))
     
     def test_can_handle_sub_string_match(self):
         target = 'this is a test'
         prose = 'is'
-        self.assertTrue(is_prose_inside_inserted_text(prose, target))
+        self.assertTrue(is_prose_inside_inserted_text_with_consistent_separator(prose, target))
     
     def test_can_handle_multiple_words(self):
         target = 'this is a test'
         prose = 'this is'
-        self.assertTrue(is_prose_inside_inserted_text(prose, target))
+        self.assertTrue(is_prose_inside_inserted_text_with_consistent_separator(prose, target))
     
     def test_can_handle_multiple_words_with_different_separators(self):
         target = 'this-is_____a test'
         prose = 'this is a'
-        self.assertTrue(is_prose_inside_inserted_text(prose, target))
+        self.assertTrue(is_prose_inside_inserted_text_with_consistent_separator(prose, target))
     
     def test_can_handle_multiple_cases(self):
         target = 'ChickenEATSgrainstonight'
         prose = 'chicken eats grains'
-        self.assertTrue(is_prose_inside_inserted_text(prose, target))
+        self.assertTrue(is_prose_inside_inserted_text_with_consistent_separator(prose, target))
 
 def command_set_matches_expected_potential_command_information(command_set, expected):
     if command_set.get_size() != len(expected):
