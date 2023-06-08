@@ -143,6 +143,21 @@ class TestFindingProseInText(unittest.TestCase):
         prose = 'this s'
         self.assertFalse(is_prose_inside_inserted_text_with_consistent_separator(prose, target))
 
+    def test_consistent_separator_without_separators(self):
+        target = 'thisisatest'
+        self.assertTrue(self.is_consistent_separator(target))
+    
+    def test_handles_single_character_separator(self):
+        target = 'this_is_a_test'
+        self.assertTrue(self.is_consistent_separator(target))
+    
+    def test_inconsistent_separator_with_multiple_separators(self):
+        target = 'this_is__a_test'
+        self.assertFalse(self.is_consistent_separator(target))
+        
+    def is_consistent_separator(self, target_text: str):
+        analyzer = TextSeparationAnalyzer(target_text)
+        return analyzer.is_separator_consistent()
 
 def command_set_matches_expected_potential_command_information(command_set, expected):
     if command_set.get_size() != len(expected):
