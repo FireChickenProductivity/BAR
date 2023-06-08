@@ -132,6 +132,17 @@ class TestFindingProseInText(unittest.TestCase):
         target = 'ChickenEATSgrainstonight'
         prose = 'chicken eats grains'
         self.assertTrue(is_prose_inside_inserted_text_with_consistent_separator(prose, target))
+    
+    def test_fails_with_first_word_off(self):
+        target = 'this is a test'
+        prose = 'ths is'
+        self.assertFalse(is_prose_inside_inserted_text_with_consistent_separator(prose, target))
+    
+    def test_fails_with_last_word_off(self):
+        target = 'this is a test'
+        prose = 'this s'
+        self.assertFalse(is_prose_inside_inserted_text_with_consistent_separator(prose, target))
+
 
 def command_set_matches_expected_potential_command_information(command_set, expected):
     if command_set.get_size() != len(expected):
