@@ -237,16 +237,20 @@ class TextSeparationAnalyzer:
         self.prose_index = None
         self.prose_beginning_index = None
         self.prose_ending_index = None
+        self.found_prose: bool = False
     
-    def find_prose_in_separated_part(self, prose: str):
+    def search_for_prose_in_separated_part(self, prose: str):
         lowercase_prose = prose.lower()
         prose_without_spaces = lowercase_prose.replace(' ', '')
         words = lowercase_prose.split(' ')
         for index in range(len(self.text_separation.get_separated_parts())):
-            if self.find_prose_at_separated_part_index(prose_without_spaces, words, index): return True
-        return False
+            if self.search_for_prose_at_separated_part_index(prose_without_spaces, words, index):
+                self.found_prose = True
+                return 
+        self.found_prose = False
+        return
 
-    def find_prose_at_separated_part_index(self, prose_without_spaces: str, words, index: int):
+    def search_for_prose_at_separated_part_index(self, prose_without_spaces: str, words, index: int):
         separated_parts = self.text_separation.get_separated_parts()
         if prose_without_spaces in separated_parts[index].lower(): 
             self.prose_index = index
@@ -292,10 +296,14 @@ class TextSeparationAnalyzer:
     
     def get_prose_ending_index(self):
         return self.prose_ending_index
+    
+    def has_found_prose(self):
+        return self.found_prose
 
 def is_prose_inside_inserted_text_with_consistent_separator(prose: str, text: str) -> bool:
     text_separation_analyzer = TextSeparationAnalyzer(text)
-    return text_separation_analyzer.find_prose_in_separated_part(prose)
+    text_separation_analyzer.search_for_prose_in_separated_part(prose)
+    return text_separation_analyzer.has_found_prose()
 
 def basic_command_filter(command: PotentialCommandInformation):
     return command.get_average_words_dictated() > 1 and command.get_number_of_times_used() > 1 and \
