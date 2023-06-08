@@ -251,6 +251,16 @@ class TextSeparationAnalyzer:
             if separated_part != word: return True
         return False
     
+    def perform_final_prose_search(self, words, separated_parts, index):
+        if len(words) == 1:
+            self.found_prose = True
+        else:
+            final_separated_part = separated_parts[index + len(words) - 1].lower()
+            last_word = words[-1]
+            if final_separated_part.startswith(last_word): 
+                self.prose_ending_index = final_separated_part.find(last_word)
+                self.found_prose = True
+    
     def search_for_prose_at_separated_part_index(self, prose_without_spaces: str, words, index: int):
         separated_parts = self.text_separation.get_separated_parts()
 
@@ -266,14 +276,7 @@ class TextSeparationAnalyzer:
 
         if self.is_prose_middle_different_from_separated_parts_at_index(words, separated_parts, index): return 
         
-        if len(words) > 1:
-            final_separated_part = separated_parts[index + len(words) - 1].lower()
-            last_word = words[-1]
-            if final_separated_part == last_word: self.prose_ending_index = 0
-            elif final_separated_part.startswith(last_word): self.prose_ending_index = final_separated_part.find(last_word)
-            else: return
-
-        self.found_prose = True
+        self.perform_final_prose_search(words, separated_parts, index)
     
     def search_for_prose_in_separated_part(self, prose: str):
         lowercase_prose = prose.lower()
