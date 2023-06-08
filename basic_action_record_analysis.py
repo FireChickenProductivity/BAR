@@ -237,20 +237,21 @@ class TextSeparationAnalyzer:
         self.prose_beginning_index = None
         self.prose_ending_index = None
     
-    def is_prose_in_separated_part(self, prose: str):
+    def find_prose_in_separated_part(self, prose: str):
         lowercase_prose = prose.lower()
         prose_without_spaces = lowercase_prose.replace(' ', '')
         words = lowercase_prose.split(' ')
         for index in range(len(self.text_separation.get_separated_parts())):
-            if self.is_prose_at_separated_part_index(prose_without_spaces, words, index): return True
+            if self.find_prose_at_separated_part_index(prose_without_spaces, words, index): return True
         return False
 
-    def is_prose_at_separated_part_index(self, prose_without_spaces: str, words, index: int):
+    def find_prose_at_separated_part_index(self, prose_without_spaces: str, words, index: int):
         separated_parts = self.text_separation.get_separated_parts()
         if prose_without_spaces in separated_parts[index].lower(): 
             self.prose_index = index
             self.prose_beginning_index = separated_parts[index].lower().find(prose_without_spaces)
             return True
+
         if len(words) + index > len(separated_parts): return False
 
         initial_separated_part = separated_parts[index].lower()
@@ -271,12 +272,30 @@ class TextSeparationAnalyzer:
             elif final_separated_part.startswith(last_word): self.prose_ending_index = final_separated_part.find(last_word)
             else: return False
 
+        self.prose_index = index
         return True
+    
+    def is_separator_consistent(self):
+        separators = self.text_separation.get_separators()
+        if len(separators) <= 1: return True
+        initial_separator = separators[0]
+        for index in range(1, len(separators)):
+            if separators[index] != initial_separator: return False
+        return True
+
+    def get_prose_index(self):
+        return self.prose_index
+    
+    def get_prose_beginning_index(self):
+        return self.prose_beginning_index
+    
+    def get_prose_ending_index(self):
+        return self.prose_ending_index
 
 
 def is_prose_inside_inserted_text_with_consistent_separator(prose: str, text: str) -> bool:
     text_separation_analyzer = TextSeparationAnalyzer(text, lambda character: character.isalpha())
-    return text_separation_analyzer.is_prose_in_separated_part(prose)
+    return text_separation_analyzer.find_prose_in_separated_part(prose)
 
 def basic_command_filter(command: PotentialCommandInformation):
     return command.get_average_words_dictated() > 1 and command.get_number_of_times_used() > 1 and \
