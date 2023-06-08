@@ -231,7 +231,7 @@ class TextSeparation:
         return self.separators
 
 class TextSeparationAnalyzer:
-    def __init__(self, text: str, character_filter):
+    def __init__(self, text: str, character_filter = lambda character: character.isalpha()):
         self.text_separation = TextSeparation(text, character_filter)
         self.prose_index = None
         self.prose_beginning_index = None
@@ -275,8 +275,8 @@ class TextSeparationAnalyzer:
         self.prose_index = index
         return True
     
-    def is_separator_consistent(self):
-        separators = self.text_separation.get_separators()
+    def is_separator_consistent(self, starting_index: int = 0, ending_index: int = -1):
+        separators = self.text_separation.get_separators()[starting_index:ending_index]
         if len(separators) <= 1: return True
         initial_separator = separators[0]
         for index in range(1, len(separators)):
@@ -292,9 +292,8 @@ class TextSeparationAnalyzer:
     def get_prose_ending_index(self):
         return self.prose_ending_index
 
-
 def is_prose_inside_inserted_text_with_consistent_separator(prose: str, text: str) -> bool:
-    text_separation_analyzer = TextSeparationAnalyzer(text, lambda character: character.isalpha())
+    text_separation_analyzer = TextSeparationAnalyzer(text)
     return text_separation_analyzer.find_prose_in_separated_part(prose)
 
 def basic_command_filter(command: PotentialCommandInformation):
