@@ -233,22 +233,44 @@ class TextSeparation:
 class TextSeparationAnalyzer:
     def __init__(self, text: str, character_filter):
         self.text_separation = TextSeparation(text, character_filter)
+        self.prose_index = None
+        self.prose_beginning_index = None
+        self.prose_ending_index = None
     
     def is_prose_in_separated_part(self, prose: str):
         lowercase_prose = prose.lower()
+        prose_without_spaces = lowercase_prose.replace(' ', '')
         words = lowercase_prose.split(' ')
         for index in range(len(self.text_separation.get_separated_parts())):
-            if self.is_prose_at_separated_part_index(lowercase_prose, words, index): return True
+            if self.is_prose_at_separated_part_index(prose_without_spaces, words, index): return True
         return False
 
-    def is_prose_at_separated_part_index(self, prose: str, words, index: int):
+    def is_prose_at_separated_part_index(self, prose_without_spaces: str, words, index: int):
         separated_parts = self.text_separation.get_separated_parts()
-        if prose.replace(' ', '') in separated_parts[index].lower(): return True
+        if prose_without_spaces in separated_parts[index].lower(): 
+            self.prose_index = index
+            self.prose_beginning_index = separated_parts[index].lower().find(prose_without_spaces)
+            return True
         if len(words) + index > len(separated_parts): return False
-        for prose_index in range(len(words)):
+
+        initial_separated_part = separated_parts[index].lower()
+        first_word = words[0]
+        if initial_separated_part == first_word: self.prose_beginning_index = 0
+        elif initial_separated_part.endswith(first_word): self.prose_beginning_index = initial_separated_part.rfind(first_word)
+        else: return False
+
+        for prose_index in range(1, len(words) - 1):
             word = words[prose_index]
             separated_part: str = separated_parts[prose_index + index].lower()
-            if separated_part != word and not (prose_index == 0 and separated_part.endswith(word)) and not (prose_index == len(words) - 1 and separated_part.startswith(word)): return False
+            if separated_part != word: return False
+        
+        if len(words) > 1:
+            final_separated_part = separated_parts[index + len(words) - 1].lower()
+            last_word = words[-1]
+            if final_separated_part == last_word: self.prose_ending_index = 0
+            elif final_separated_part.startswith(last_word): self.prose_ending_index = final_separated_part.find(last_word)
+            else: return False
+
         return True
 
 
