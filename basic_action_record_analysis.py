@@ -205,19 +205,20 @@ class TextSeparation:
         self.current_separated_part = ''
         self.current_separator = ''
         for character in string: self._process_character(character, character_filter)
-        if not self.current_separated_part: self._add_separator()
+        if not self.current_separated_part: self._handle_separator()
         if not self.current_separator: self._add_separated_part()
     
     def _process_character(self, character, character_filter):
         if character_filter(character): 
-            if not self.current_separated_part: self._add_separator()
+            if not self.current_separated_part: self._handle_separator()
             self.current_separated_part += character
         else:
             if not self.current_separator: self._add_separated_part()
             self.current_separator += character
 
-    def _add_separator(self):
-        self.separators.append(self.current_separator)
+    def _handle_separator(self):
+        if len(self.separated_parts) > 0:
+            self.separators.append(self.current_separator)
         self.current_separator = ''
     
     def _add_separated_part(self):
