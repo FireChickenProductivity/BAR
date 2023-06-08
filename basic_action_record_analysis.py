@@ -386,13 +386,13 @@ def compute_repeat_simplified_command_chain(command_chain):
     new_command = CommandChain(command_chain.get_name(), new_actions, command_chain.get_chain_number(), command_chain.get_size())
     return new_command
 
-def create_command_information_set_from_record(record, max_command_chain_considered, *, verbose = True):
+def create_command_information_set_from_record(record, max_command_chain_considered, *, verbose = False):
     command_set: CommandInformationSet = CommandInformationSet()    
-    for chain in range(len(record)): command_set.process_chain_usage(record, chain, max_command_chain_considered, verbose)
+    for chain in range(len(record)): command_set.process_chain_usage(record, chain, max_command_chain_considered, verbose = verbose)
     return command_set
 
-def compute_recommendations_from_record(record, max_command_chain_considered = 100):
-    command_set = create_command_information_set_from_record(record, max_command_chain_considered)
+def compute_recommendations_from_record(record, max_command_chain_considered = 100, *, verbose = False):
+    command_set = create_command_information_set_from_record(record, max_command_chain_considered, verbose = verbose)
     recommended_commands = command_set.get_commands_meeting_condition(basic_command_filter)
     sorted_recommended_commands = sorted(recommended_commands, key = lambda command: command.get_number_of_times_used(), reverse = True)
     return sorted_recommended_commands
@@ -400,7 +400,7 @@ def compute_recommendations_from_record(record, max_command_chain_considered = 1
 def generate_recommendations(directory):
     record = obtain_file_record(directory)
     print('finished reading record')
-    recommendations = compute_recommendations_from_record(record)
+    recommendations = compute_recommendations_from_record(record, verbose = True)
     print('outputting recommendations')
     output_recommendations(recommendations, directory)
     print('completed')
