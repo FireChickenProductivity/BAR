@@ -238,18 +238,19 @@ class TextSeparationAnalyzer:
         self.prose_beginning_index = None
         self.prose_ending_index = None
         self.found_prose: bool = False
-    
-    def search_for_prose_in_separated_part(self, prose: str):
-        lowercase_prose = prose.lower()
-        prose_without_spaces = lowercase_prose.replace(' ', '')
-        words = lowercase_prose.split(' ')
-        for index in range(len(self.text_separation.get_separated_parts())):
-            self.search_for_prose_at_separated_part_index(prose_without_spaces, words, index)
-            self.prose_index = index
-            if self.found_prose: return
-        self.found_prose = False
-        return
 
+    def search_for_prose_at_separated_part_index_beginning(self, prose_without_spaces, separated_parts, index):
+        if prose_without_spaces in separated_parts[index].lower(): 
+            self.prose_beginning_index = separated_parts[index].lower().find(prose_without_spaces)
+            self.found_prose = True
+    
+    def is_prose_middle_different_from_separated_parts_at_index(self, words, separated_parts, index):
+        for prose_index in range(1, len(words) - 1):
+            word = words[prose_index]
+            separated_part: str = separated_parts[prose_index + index].lower()
+            if separated_part != word: return True
+        return False
+    
     def search_for_prose_at_separated_part_index(self, prose_without_spaces: str, words, index: int):
         separated_parts = self.text_separation.get_separated_parts()
 
@@ -274,17 +275,16 @@ class TextSeparationAnalyzer:
 
         self.found_prose = True
     
-    def search_for_prose_at_separated_part_index_beginning(self, prose_without_spaces, separated_parts, index):
-        if prose_without_spaces in separated_parts[index].lower(): 
-            self.prose_beginning_index = separated_parts[index].lower().find(prose_without_spaces)
-            self.found_prose = True
-    
-    def is_prose_middle_different_from_separated_parts_at_index(self, words, separated_parts, index):
-        for prose_index in range(1, len(words) - 1):
-            word = words[prose_index]
-            separated_part: str = separated_parts[prose_index + index].lower()
-            if separated_part != word: return True
-        return False
+    def search_for_prose_in_separated_part(self, prose: str):
+        lowercase_prose = prose.lower()
+        prose_without_spaces = lowercase_prose.replace(' ', '')
+        words = lowercase_prose.split(' ')
+        for index in range(len(self.text_separation.get_separated_parts())):
+            self.search_for_prose_at_separated_part_index(prose_without_spaces, words, index)
+            self.prose_index = index
+            if self.found_prose: return
+        self.found_prose = False
+        return
     
     def is_separator_consistent(self, starting_index: int = 0, ending_index: int = -1):
         separators = self.text_separation.get_separators()[starting_index:ending_index]
