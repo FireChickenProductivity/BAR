@@ -327,6 +327,16 @@ class TextSeparationAnalyzer:
     
     def has_found_prose(self):
         return self.found_prose
+    
+    def compute_text_before_prose(self) -> str:
+        text: str = self.text_separation.get_prefix()
+        separated_parts = self.text_separation.get_separated_parts()
+        separators = self.text_separation.get_separators()
+        for index in range(self.prose_index):
+            text += separated_parts[index]
+            text += separators[index]
+        text += separated_parts[self.prose_index][0:self.prose_beginning_index]
+        return text
 
 def is_prose_inside_inserted_text_with_consistent_separator(prose: str, text: str) -> bool:
     text_separation_analyzer = TextSeparationAnalyzer(text)
