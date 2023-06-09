@@ -173,7 +173,12 @@ class TestFindingProseInText(unittest.TestCase):
     
     def test_can_find_one_word_at_ending(self):
         self.assert_indices_match('testing', 'this_is_actuallytestingstuff', 2, 8, 15)
-        
+    
+    def test_can_find_multiple_words_at_ending(self):
+        self.assert_indices_match('this is a test', 'once_again_this_is_a_test', 2, 0, 4)
+    
+    def test_can_find_multiple_words_at_middle_of_ending(self):
+        self.assert_indices_match('this is a test', 'once_againthis_is_a_testing', 1, 5, 4)
     
     def is_consistent_separator(self, target_text: str):
         analyzer = TextSeparationAnalyzer(target_text)
