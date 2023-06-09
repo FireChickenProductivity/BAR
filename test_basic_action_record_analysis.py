@@ -208,6 +208,24 @@ class TestFindingProseInText(unittest.TestCase):
         expected = '_This is_'
         self.assert_text_before_prose_matches(original_text, prose, expected)
     
+    def test_can_find_empty_text_after_prose_with_one_word(self):
+        original_text: str = 'test'
+        prose: str = 'test'
+        expected: str = ''
+        self.assert_text_after_prose_matches(original_text, prose, expected)
+    
+    def test_can_find_text_after_prose_with_one_word(self):
+        original_text: str = 'test'
+        prose: str = 'te'
+        expected: str = 'st'
+        self.assert_text_after_prose_matches(original_text, prose, expected)
+    
+    def test_can_find_text_after_prose_with_multiple_words(self):
+        original_text: str = '_This is_a!test today'
+        prose: str = 'is a'
+        expected = '!test today'
+        self.assert_text_after_prose_matches(original_text, prose, expected)
+    
     def is_consistent_separator(self, target_text: str):
         analyzer = TextSeparationAnalyzer(target_text)
         return analyzer.is_separator_consistent()
@@ -227,6 +245,12 @@ class TestFindingProseInText(unittest.TestCase):
         analyzer = TextSeparationAnalyzer(original_text)
         analyzer.search_for_prose_in_separated_part(prose)
         actual: str = analyzer.compute_text_before_prose()
+        self.assertEqual(actual, expected)
+    
+    def assert_text_after_prose_matches(self, original_text: str, prose: str, expected: str):
+        analyzer = TextSeparationAnalyzer(original_text)
+        analyzer.search_for_prose_in_separated_part(prose)
+        actual: str = analyzer.compute_text_after_prose()
         self.assertEqual(actual, expected)
 
 def command_set_matches_expected_potential_command_information(command_set, expected):
