@@ -198,12 +198,16 @@ def make_abstract_repeat_representation_for(command_chain):
     new_command = CommandChain(new_name, new_actions, command_chain.get_chain_number(), command_chain.get_size())
     return new_command
 
+def is_character_alpha(character: str):
+    return character.isalpha()
+
 class TextSeparation:
     def __init__(self, string: str, character_filter):
         self.separated_parts = []
         self.separators = []
         self.current_separated_part = ''
         self.current_separator = ''
+        self.text_prefix = ''
         for character in string: self._process_character(character, character_filter)
         if not self.current_separated_part: self._handle_separator()
         if not self.current_separator: self._add_separated_part()
@@ -213,12 +217,14 @@ class TextSeparation:
             if not self.current_separated_part: self._handle_separator()
             self.current_separated_part += character
         else:
-            if not self.current_separator: self._add_separated_part()
+            if not self.current_separator and self.current_separated_part: self._add_separated_part()
             self.current_separator += character
 
     def _handle_separator(self):
         if len(self.separated_parts) > 0:
             self.separators.append(self.current_separator)
+        else:
+            self.text_prefix = self.current_separator
         self.current_separator = ''
     
     def _add_separated_part(self):
@@ -230,9 +236,12 @@ class TextSeparation:
 
     def get_separators(self):
         return self.separators
+    
+    def get_prefix(self):
+        return self.text_prefix
 
 class TextSeparationAnalyzer:
-    def __init__(self, text: str, character_filter = lambda character: character.isalpha()):
+    def __init__(self, text: str, character_filter = is_character_alpha):
         self.text_separation = TextSeparation(text, character_filter)
         self.prose_index = None
         self.prose_beginning_index = None
