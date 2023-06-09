@@ -159,6 +159,22 @@ class TestFindingProseInText(unittest.TestCase):
         target = 'this!!!!!is!!!!!a!!!!!test'
         self.assertTrue(self.is_consistent_separator(target))
     
+    def test_can_find_one_word_prose_at_beginning(self):
+        self.assert_indices_match('test', 'testing this here', 0, 0, 4)
+    
+    def test_can_find_multiple_words_at_beginning(self):
+        self.assert_indices_match('this is a test', 'this_is_a_test_', 0, 0, 4)
+    
+    def test_can_find_one_word_in_middle(self):
+        self.assert_indices_match('test', 'this_is_a_realtest_right_here', 3, 4, 8)
+    
+    def test_can_find_multiple_words_in_middle(self):
+        self.assert_indices_match('this is a testr', 'yes_forrealthis_is_a_testrighthere_', 1, 7, 5)
+    
+    def test_can_find_one_word_at_ending(self):
+        self.assert_indices_match('testing', 'this_is_actuallytestingstuff', 2, 8, 15)
+        
+    
     def is_consistent_separator(self, target_text: str):
         analyzer = TextSeparationAnalyzer(target_text)
         return analyzer.is_separator_consistent()
