@@ -159,6 +159,16 @@ class TestFindingProseInText(unittest.TestCase):
         target = 'this!!!!!is!!!!!a!!!!!test'
         self.assertTrue(self.is_consistent_separator(target))
     
+    def test_no_prefix_without_prefix(self):
+        target = 'this_is_a_test'
+        expected_prefix = ''
+        self.assert_prefix_matches(target, expected_prefix)
+    
+    def test_handles_simple_prefix(self):
+        target = '!this_is_a_test'
+        expected_prefix = '!'
+        self.assert_prefix_matches(target, expected_prefix)
+    
     def test_can_find_one_word_prose_at_beginning(self):
         self.assert_indices_match('test', 'testing this here', 0, 0, 4)
     
@@ -183,6 +193,10 @@ class TestFindingProseInText(unittest.TestCase):
     def is_consistent_separator(self, target_text: str):
         analyzer = TextSeparationAnalyzer(target_text)
         return analyzer.is_separator_consistent()
+    
+    def assert_prefix_matches(self, target_text: str, prefix: str):
+        analyzer = TextSeparation(target_text, is_character_alpha)
+        self.assertEqual(analyzer.get_prefix(), prefix)
     
     def assert_indices_match(self, prose, text, prose_index, beginning_index, ending_index):
         analyzer = TextSeparationAnalyzer(text)
