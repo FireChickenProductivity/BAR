@@ -413,7 +413,7 @@ class TextSeparationAnalyzer:
         prose_words = []
         separated_parts = self.text_separation.get_separated_parts()
         prose_words.append(separated_parts[self.prose_index][self.prose_beginning_index:])
-        prose_words.extend([separated_parts[index] for index in range(self.prose_index, prose_final_index)])
+        prose_words.extend([separated_parts[index] for index in range(self.prose_index + 1, prose_final_index)])
         prose_words.append(separated_parts[prose_final_index][:self.prose_ending_index])
         return prose_words
 
