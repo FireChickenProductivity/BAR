@@ -396,7 +396,13 @@ class TextSeparationAnalyzer:
 def is_prose_inside_inserted_text_with_consistent_separator(prose: str, text: str) -> bool:
     text_separation_analyzer = TextSeparationAnalyzer(text)
     text_separation_analyzer.search_for_prose_in_separated_part(prose)
+    text_separation_analyzer.is_prose_separator_consistent()
     return text_separation_analyzer.has_found_prose()
+
+def compute_case_string(text: str) -> str:
+    if text.islower(): return 'lower'
+    elif text.isupper(): return 'upper'
+    elif text[0].isupper() and text[1:].islower(): return 'capitalized'
 
 def basic_command_filter(command: PotentialCommandInformation):
     return command.get_average_words_dictated() > 1 and command.get_number_of_times_used() > 1 and \
