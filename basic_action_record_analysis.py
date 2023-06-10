@@ -1,5 +1,6 @@
 import math
 from pathlib import PurePath
+from typing import List
 
 try:
     from action_records import BasicAction, read_file_record, TalonCapture, CommandChain
@@ -282,6 +283,7 @@ class TextSeparationAnalyzer:
         self.prose_ending_index = None
         self.number_of_prose_words = None
         self.found_prose: bool = False
+        self.prose: str = None
 
     def search_for_prose_beginning_at_separated_part_index(self, words, separated_parts, index):
         initial_separated_part = separated_parts[index].lower()
@@ -337,6 +339,7 @@ class TextSeparationAnalyzer:
         prose_without_spaces = lowercase_prose.replace(' ', '')
         words = lowercase_prose.split(' ')
         self.number_of_prose_words = len(words)
+        self.prose = prose
         for index in range(len(self.text_separation.get_separated_parts())):
             self.search_for_prose_at_separated_part_index(prose_without_spaces, words, index)
             self.prose_index = index
@@ -351,9 +354,6 @@ class TextSeparationAnalyzer:
         for index in range(1, len(separators)):
             if separators[index] != initial_separator: return False
         return True
-    
-    def is_prose_separator_consistent(self):
-        return self.is_separator_consistent(self.prose_index, self.compute_final_prose_index_into_separated_parts())
 
     def get_prose_index(self):
         return self.prose_index
@@ -367,6 +367,9 @@ class TextSeparationAnalyzer:
     def compute_final_prose_index_into_separated_parts(self):
         return self.prose_index + self.number_of_prose_words - 1
     
+    def is_prose_separator_consistent(self):
+        return self.is_separator_consistent(self.prose_index, self.compute_final_prose_index_into_separated_parts())
+
     def has_found_prose(self):
         return self.found_prose
     
@@ -392,6 +395,32 @@ class TextSeparationAnalyzer:
             text += separated_parts[index]
             if index < len(separators): text += separators[index]
         return text
+    
+    def _compute_prose_portion_of_nonseparated_text(self):
+        words = self.prose.split(' ')
+        prose_portion_of_text_as_string = self.text_separation.get_separated_parts()[self.prose_index][self.prose_beginning_index:self.prose_ending_index]
+        word_starting_index = 0
+        words_from_text = []
+        for word in words:
+            word_ending_index = word_starting_index + len(word)
+            word_from_text = prose_portion_of_text_as_string[word_starting_index:word_ending_index]
+            words_from_text.append(word_from_text)
+            word_starting_index = word_ending_index
+        return words_from_text
+
+    def _compute_prose_portion_of_separated_text(self, prose_final_index):
+        prose_words = []
+        separated_parts = self.text_separation.get_separated_parts()
+        prose_words.append(separated_parts[self.prose_index][self.prose_beginning_index:])
+        prose_words.extend([separated_parts[index] for index in range(self.prose_index, prose_final_index)])
+        prose_words.append(separated_parts[prose_final_index][:self.prose_ending_index])
+        return prose_words
+
+
+    def compute_prose_portion_of_text(self) -> List[str]:
+        prose_final_index = self.compute_final_prose_index_into_separated_parts()
+        if self.prose_index == prose_final_index: return self._compute_prose_portion_of_nonseparated_text()
+        else: return self._compute_prose_portion_of_separated_text()
 
 def is_prose_inside_inserted_text_with_consistent_separator(prose: str, text: str) -> bool:
     text_separation_analyzer = TextSeparationAnalyzer(text)
@@ -399,10 +428,19 @@ def is_prose_inside_inserted_text_with_consistent_separator(prose: str, text: st
     text_separation_analyzer.is_prose_separator_consistent()
     return text_separation_analyzer.has_found_prose()
 
+class InvalidCaseException(Exception): pass
+
 def compute_case_string(text: str) -> str:
     if text.islower(): return 'lower'
     elif text.isupper(): return 'upper'
     elif text[0].isupper() and text[1:].islower(): return 'capitalized'
+    else: raise InvalidCaseException()
+
+def compute_case_string_for_prose(analyzer: TextSeparationAnalyzer):
+    prose = analyzer.compute_prose_portion_of_text()
+    case_strings = [compute_case_string(prose_word) for prose_word in prose]
+    case_string = ' '.join(case_strings)
+    return case_string
 
 def basic_command_filter(command: PotentialCommandInformation):
     return command.get_average_words_dictated() > 1 and command.get_number_of_times_used() > 1 and \
