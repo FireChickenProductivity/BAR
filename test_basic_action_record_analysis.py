@@ -333,6 +333,23 @@ class TestDetectingProseCases(unittest.TestCase):
         analyzer.search_for_prose_in_separated_part(prose)
         case_string = compute_case_string_for_prose(analyzer)
         self.assertEqual(case_string, expected)
+    
+class TestProseCasesSimplification(unittest.TestCase):
+    def test_handles_single_case(self):
+        self.assert_simplification_matches_expected(['lower'], ['lower'])
+    
+    def test_handles_two_different_cases(self):
+        self.assert_simplification_matches_expected(['lower', 'upper'], ['lower', 'upper'])
+    
+    def test_handles_two_identical_cases(self):
+        self.assert_simplification_matches_expected(['lower', 'lower'], ['lower'])
+    
+    def test_handles_identical_cases_followed_by_different(self):
+        self.assert_simplification_matches_expected(['upper', 'capitalized', 'lower', 'upper', 'lower', 'lower', 'lower'], ['upper', 'capitalized', 'lower', 'upper', 'lower'])
+        
+    def assert_simplification_matches_expected(self, original, expected):
+        actual = compute_simplified_case_strings_list(original)
+        self.assertEqual(actual, expected)
 
 def command_set_matches_expected_potential_command_information(command_set, expected):
     if command_set.get_size() != len(expected):
