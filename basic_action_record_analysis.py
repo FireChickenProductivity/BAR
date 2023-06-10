@@ -279,6 +279,7 @@ class TextSeparationAnalyzer:
     def __init__(self, text: str, character_filter = is_character_alpha):
         self.text_separation = TextSeparation(text, character_filter)
         self.prose_index = None
+        self.final_prose_index_into_separated_parts = None
         self.prose_beginning_index = None
         self.prose_ending_index = None
         self.number_of_prose_words = None
@@ -295,6 +296,7 @@ class TextSeparationAnalyzer:
             self.prose_beginning_index = separated_parts[index].lower().find(prose_without_spaces)
             self.prose_ending_index = len(prose_without_spaces) + self.prose_beginning_index
             self.found_prose = True
+            self.final_prose_index_into_separated_parts = index
     
     def is_prose_middle_different_from_separated_parts_at_index(self, words, separated_parts, index):
         for prose_index in range(1, len(words) - 1):
@@ -306,8 +308,10 @@ class TextSeparationAnalyzer:
     def perform_final_prose_search_at_index(self, words, separated_parts, index):
         if len(words) == 1:
             self.found_prose = True
+            self.final_prose_index_into_separated_parts = self.prose_index
         else:
-            final_separated_part = separated_parts[index + len(words) - 1].lower()
+            self.final_prose_index_into_separated_parts = index + len(words) - 1
+            final_separated_part = separated_parts[self.final_prose_index_into_separated_parts].lower()
             last_word = words[-1]
             if final_separated_part.startswith(last_word): 
                 self.prose_ending_index = len(last_word)
@@ -317,6 +321,7 @@ class TextSeparationAnalyzer:
         self.prose_beginning_index = None
         self.prose_index = None
         self.prose_ending_index = None
+        self.final_prose_index_into_separated_parts = None
 
     def search_for_prose_at_separated_part_index(self, prose_without_spaces: str, words, index: int):
         self.reset_indices()
@@ -363,12 +368,9 @@ class TextSeparationAnalyzer:
     
     def get_prose_ending_index(self):
         return self.prose_ending_index
-    
-    def compute_final_prose_index_into_separated_parts(self):
-        return self.prose_index + self.number_of_prose_words - 1
-    
+
     def is_prose_separator_consistent(self):
-        return self.is_separator_consistent(self.prose_index, self.compute_final_prose_index_into_separated_parts())
+        return self.is_separator_consistent(self.prose_index, self.final_prose_index_into_separated_parts)
 
     def has_found_prose(self):
         return self.found_prose
@@ -387,11 +389,10 @@ class TextSeparationAnalyzer:
         separated_parts = self.text_separation.get_separated_parts()
         separators = self.text_separation.get_separators()
         text: str = ''
-        final_prose_index_into_separated_parts: int = self.compute_final_prose_index_into_separated_parts()
-        first_word: str = separated_parts[final_prose_index_into_separated_parts]
+        first_word: str = separated_parts[self.final_prose_index_into_separated_parts]
         if self.prose_ending_index < len(first_word): text += first_word[self.prose_ending_index:]
-        if self.prose_index < len(separators): text += separators[final_prose_index_into_separated_parts] 
-        for index in range(final_prose_index_into_separated_parts + 1, len(separated_parts)):
+        if self.prose_index < len(separators): text += separators[self.final_prose_index_into_separated_parts] 
+        for index in range(self.final_prose_index_into_separated_parts + 1, len(separated_parts)):
             text += separated_parts[index]
             if index < len(separators): text += separators[index]
         return text
@@ -416,11 +417,9 @@ class TextSeparationAnalyzer:
         prose_words.append(separated_parts[prose_final_index][:self.prose_ending_index])
         return prose_words
 
-
     def compute_prose_portion_of_text(self) -> List[str]:
-        prose_final_index = self.compute_final_prose_index_into_separated_parts()
-        if self.prose_index == prose_final_index: return self._compute_prose_portion_of_nonseparated_text()
-        else: return self._compute_prose_portion_of_separated_text()
+        if self.prose_index == self.final_prose_index_into_separated_parts: return self._compute_prose_portion_of_nonseparated_text()
+        else: return self._compute_prose_portion_of_separated_text(self.final_prose_index_into_separated_parts)
 
 def is_prose_inside_inserted_text_with_consistent_separator(prose: str, text: str) -> bool:
     text_separation_analyzer = TextSeparationAnalyzer(text)
