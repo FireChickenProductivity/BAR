@@ -81,6 +81,39 @@ class PotentialAbstractCommandInformation(PotentialCommandInformation):
     def is_abstract(self):
         return True
 
+def compute_repeat_simplified_command_chain(command_chain):
+    new_actions = []
+    last_non_repeat_action = None
+    repeat_count: int = 0
+    for action in command_chain.get_actions():
+        if action == last_non_repeat_action:
+            repeat_count += 1
+        else:
+            if repeat_count > 0:
+                new_actions.append(BasicAction('repeat', [repeat_count]))
+                repeat_count = 0
+            new_actions.append(action)
+            last_non_repeat_action = action
+    if repeat_count > 0:
+        new_actions.append(BasicAction('repeat', [repeat_count]))
+    new_command = CommandChain(command_chain.get_name(), new_actions, command_chain.get_chain_number(), command_chain.get_size())
+    return new_command
+
+def compute_insert_simplified_command_chain(command_chain):
+    new_actions = []
+    current_insert_text = ''
+    for action in command_chain.get_actions():
+        if action.get_name() == 'insert':
+            current_insert_text += action.get_arguments()[0]
+        else:
+            if current_insert_text:
+                new_actions.append(BasicAction('insert', [current_insert_text]))
+                current_insert_text = ''
+            new_actions.append(action)
+    if current_insert_text: new_actions.append(BasicAction('insert', [current_insert_text]))
+    new_command = CommandChain(command_chain.get_name(), new_actions, command_chain.get_chain_number(), command_chain.get_size())
+    return new_command
+
 class CommandInformationSet:
     def __init__(self):
         self.commands = {}
@@ -114,8 +147,9 @@ class CommandInformationSet:
     
     def process_partial_chain_usage(self, record, command_chain):
         command_chain.append_command(record[command_chain.get_next_chain_index()])
-        simplified_chaining_command = compute_repeat_simplified_command_chain(command_chain)
-        self.process_command_usage(simplified_chaining_command)
+        simplified_command_chain = compute_repeat_simplified_command_chain(command_chain)
+        simplified_command_chain = compute_insert_simplified_command_chain(simplified_command_chain)
+        self.process_command_usage(simplified_command_chain)
 
     def process_chain_usage(self, record, chain, max_command_chain_considered, verbose = False):
         command_chain: CommandChain = CommandChain(None, [], chain)
@@ -428,24 +462,6 @@ def output_recommendations(recommended_commands, output_directory):
     output_path = os.path.join(output_directory, OUTPUT_FILENAME)
     with open(output_path, 'w') as file:
         for command in recommended_commands: write_command_to_file(file, command)
-
-def compute_repeat_simplified_command_chain(command_chain):
-    new_actions = []
-    last_non_repeat_action = None
-    repeat_count: int = 0
-    for action in command_chain.get_actions():
-        if action == last_non_repeat_action:
-            repeat_count += 1
-        else:
-            if repeat_count > 0:
-                new_actions.append(BasicAction('repeat', [repeat_count]))
-                repeat_count = 0
-            new_actions.append(action)
-            last_non_repeat_action = action
-    if repeat_count > 0:
-        new_actions.append(BasicAction('repeat', [repeat_count]))
-    new_command = CommandChain(command_chain.get_name(), new_actions, command_chain.get_chain_number(), command_chain.get_size())
-    return new_command
 
 def create_command_information_set_from_record(record, max_command_chain_considered, *, verbose = False):
     command_set: CommandInformationSet = CommandInformationSet()    
