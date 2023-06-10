@@ -66,6 +66,24 @@ class PotentialCommandInformation:
     def __str__(self):
         return f'actions: {CommandInformationSet.compute_representation(self)}, number of times used: {self.number_of_times_used}, total number of words dictated: {self.total_number_of_words_dictated}'
 
+class ActionSequenceSet:
+    def __init__(self):
+        self.set = set()
+    
+    def insert(self, actions):
+        representation = compute_string_representation_of_actions(actions)
+        self.set.add(representation)
+    
+    def contains(self, actions):
+        return compute_string_representation_of_actions(actions) in self.set
+    
+    def contains_command_actions(self, command):
+        return self.contains(command.get_actions())
+    
+    def get_size(self):
+        return len(self.set)
+
+
 class PotentialAbstractCommandInformation(PotentialCommandInformation):
     def __init__(self, actions):
         self.instantiation_set = ActionSequenceSet()
@@ -114,95 +132,6 @@ def compute_insert_simplified_command_chain(command_chain):
     if current_insert_text: new_actions.append(BasicAction('insert', [current_insert_text]))
     new_command = CommandChain(command_chain.get_name(), new_actions, command_chain.get_chain_number(), command_chain.get_size())
     return new_command
-
-class CommandInformationSet:
-    def __init__(self):
-        self.commands = {}
-
-    def insert_command(self, command, representation):
-        self.commands[representation] = command
-    
-    def process_abstract_command_usage(self, command_chain, abstract_command_chain):
-        representation = CommandInformationSet.compute_representation(abstract_command_chain)
-        if representation not in self.commands:
-            self.insert_command(PotentialAbstractCommandInformation(abstract_command_chain.get_actions()), representation)
-        self.commands[representation].process_usage(abstract_command_chain, command_chain)
-
-    def create_abstract_commands(self, command_chain):
-        commands = []
-        if should_make_abstract_repeat_representation(command_chain):
-            abstract_repeat_representation = make_abstract_repeat_representation_for(command_chain)
-            commands.append(abstract_repeat_representation)
-        return commands
-    
-    def handle_needed_abstract_commands(self, command_chain):
-        abstract_commands = self.create_abstract_commands(command_chain)
-        for abstract_command in abstract_commands: self.process_abstract_command_usage(command_chain, abstract_command)
-
-    def process_command_usage(self, command_chain):
-        representation = CommandInformationSet.compute_representation(command_chain)
-        if representation not in self.commands:
-            self.insert_command(PotentialCommandInformation(command_chain.get_actions()), representation)
-        self.commands[representation].process_usage(command_chain)
-        self.handle_needed_abstract_commands(command_chain)
-    
-    def process_partial_chain_usage(self, record, command_chain):
-        command_chain.append_command(record[command_chain.get_next_chain_index()])
-        simplified_command_chain = compute_repeat_simplified_command_chain(command_chain)
-        simplified_command_chain = compute_insert_simplified_command_chain(simplified_command_chain)
-        self.process_command_usage(simplified_command_chain)
-
-    def process_chain_usage(self, record, chain, max_command_chain_considered, verbose = False):
-        command_chain: CommandChain = CommandChain(None, [], chain)
-        chain_target = min(len(record), chain + max_command_chain_considered)
-        for chain_ending_index in range(chain, chain_target): self.process_partial_chain_usage(record, command_chain)
-        if verbose: print('chain', chain + 1, 'out of', len(record) - 1, 'target: ', chain_target - 1)
-
-    @staticmethod
-    def compute_representation(command):
-        actions = command.get_actions()
-        representation = compute_string_representation_of_actions(actions)
-        return representation
-    
-    def get_commands_meeting_condition(self, condition):
-        commands_to_output = [command for command in self.commands.values() if condition(command)]
-        return commands_to_output
-    
-    def contains_command_with_representation(self, representation: str):
-        return representation in self.commands
-    
-    def contains_command(self, command):
-        representation = CommandInformationSet.compute_representation(command)
-        return self.contains_command_with_representation(representation)
-
-    def get_size(self):
-        return len(self.commands)
-
-    def __repr__(self):
-        return self.__str__()
-    
-    def __str__(self):
-        representation: str = ''
-        for command in self.commands.values():
-            representation += str(command) + '\n'
-        return representation
-
-class ActionSequenceSet:
-    def __init__(self):
-        self.set = set()
-    
-    def insert(self, actions):
-        representation = compute_string_representation_of_actions(actions)
-        self.set.add(representation)
-    
-    def contains(self, actions):
-        return compute_string_representation_of_actions(actions) in self.set
-    
-    def contains_command_actions(self, command):
-        return self.contains(command.get_actions())
-    
-    def get_size(self):
-        return len(self.set)
 
 def compute_string_representation_of_actions(actions):
     representation = ''
@@ -447,6 +376,78 @@ def basic_command_filter(command: PotentialCommandInformation):
             (command.get_number_of_actions()/command.get_average_words_dictated() < 2 or \
             command.get_number_of_actions()*math.sqrt(command.get_number_of_times_used()) > command.get_average_words_dictated())
 
+class CommandInformationSet:
+    def __init__(self):
+        self.commands = {}
+
+    def insert_command(self, command, representation):
+        self.commands[representation] = command
+    
+    def process_abstract_command_usage(self, command_chain, abstract_command_chain):
+        representation = CommandInformationSet.compute_representation(abstract_command_chain)
+        if representation not in self.commands:
+            self.insert_command(PotentialAbstractCommandInformation(abstract_command_chain.get_actions()), representation)
+        self.commands[representation].process_usage(abstract_command_chain, command_chain)
+
+    def create_abstract_commands(self, command_chain):
+        commands = []
+        if should_make_abstract_repeat_representation(command_chain):
+            abstract_repeat_representation = make_abstract_repeat_representation_for(command_chain)
+            commands.append(abstract_repeat_representation)
+        return commands
+    
+    def handle_needed_abstract_commands(self, command_chain):
+        abstract_commands = self.create_abstract_commands(command_chain)
+        for abstract_command in abstract_commands: self.process_abstract_command_usage(command_chain, abstract_command)
+
+    def process_command_usage(self, command_chain):
+        representation = CommandInformationSet.compute_representation(command_chain)
+        if representation not in self.commands:
+            self.insert_command(PotentialCommandInformation(command_chain.get_actions()), representation)
+        self.commands[representation].process_usage(command_chain)
+        self.handle_needed_abstract_commands(command_chain)
+    
+    def process_partial_chain_usage(self, record, command_chain):
+        command_chain.append_command(record[command_chain.get_next_chain_index()])
+        simplified_command_chain = compute_repeat_simplified_command_chain(command_chain)
+        simplified_command_chain = compute_insert_simplified_command_chain(simplified_command_chain)
+        self.process_command_usage(simplified_command_chain)
+
+    def process_chain_usage(self, record, chain, max_command_chain_considered, verbose = False):
+        command_chain: CommandChain = CommandChain(None, [], chain)
+        chain_target = min(len(record), chain + max_command_chain_considered)
+        for chain_ending_index in range(chain, chain_target): self.process_partial_chain_usage(record, command_chain)
+        if verbose: print('chain', chain + 1, 'out of', len(record) - 1, 'target: ', chain_target - 1)
+
+    @staticmethod
+    def compute_representation(command):
+        actions = command.get_actions()
+        representation = compute_string_representation_of_actions(actions)
+        return representation
+    
+    def get_commands_meeting_condition(self, condition):
+        commands_to_output = [command for command in self.commands.values() if condition(command)]
+        return commands_to_output
+    
+    def contains_command_with_representation(self, representation: str):
+        return representation in self.commands
+    
+    def contains_command(self, command):
+        representation = CommandInformationSet.compute_representation(command)
+        return self.contains_command_with_representation(representation)
+
+    def get_size(self):
+        return len(self.commands)
+
+    def __repr__(self):
+        return self.__str__()
+    
+    def __str__(self):
+        representation: str = ''
+        for command in self.commands.values():
+            representation += str(command) + '\n'
+        return representation
+
 class ProgramDirectoryInvalidException(Exception):
     pass
 
@@ -526,7 +527,7 @@ def compute_recommendations_from_record(record, max_command_chain_considered = 1
 def generate_recommendations(directory):
     record = obtain_file_record(directory)
     print('finished reading record')
-    recommendations = compute_recommendations_from_record(record, verbose = True)
+    recommendations = compute_recommendations_from_record(record, 20, verbose = True)
     print('outputting recommendations')
     output_recommendations(recommendations, directory)
     print('completed')
