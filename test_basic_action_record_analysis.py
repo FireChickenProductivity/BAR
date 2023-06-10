@@ -278,6 +278,31 @@ class TestFindingProseInText(unittest.TestCase):
         actual: str = analyzer.compute_text_after_prose()
         self.assertEqual(actual, expected)
 
+class TestConsistentProseSeparatorDetection(unittest.TestCase):
+    def test_handles_single_word_prose(self):
+        self.assert_text_with_prose_gives_the_result('this_is_a_test', 'is', True)
+    
+    def test_handles_snake_case(self):
+        self.assert_text_with_prose_gives_the_result('chicken!!this_is_a_testchicken', 'this is a test', True)
+    
+    def test_handle_spaces(self):
+        self.assert_text_with_prose_gives_the_result('for real this is a test', 'this is a test', True)
+    
+    def test_handles_two_words(self):
+        self.assert_text_with_prose_gives_the_result('this_is!_@_____a_test', 'is a', True)
+    
+    def test_handles_final_word(self):
+        self.assert_text_with_prose_gives_the_result('this_is_a_test!', 'is a test', True)
+    
+    def test_false_with_two_different_separators(self):
+        self.assert_text_with_prose_gives_the_result('this_is a test', 'this is a', False)
+
+    def assert_text_with_prose_gives_the_result(self, text: str, prose: str, expected: bool):
+        analyzer = TextSeparationAnalyzer(text)
+        analyzer.search_for_prose_in_separated_part(prose)
+        result: bool = analyzer.is_prose_separator_consistent()
+        self.assertEqual(result, expected)
+
 def command_set_matches_expected_potential_command_information(command_set, expected):
     if command_set.get_size() != len(expected):
         print(f'Incorrect size! Expected {len(expected)} but received {command_set.get_size()}')
