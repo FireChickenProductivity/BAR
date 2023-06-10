@@ -88,6 +88,31 @@ class TestCommandSimplification(unittest.TestCase):
         simplified_command = compute_repeat_simplified_command_chain(command)
 
         self.assertEqual(simplified_command.get_actions(), expected_command.get_actions())
+    
+    def test_insert_simplification_does_nothing_to_press_a(self):
+        command = generate_press_a_command_chain()
+        expected_command = generate_press_a_command_chain()
+        self.assert_command_insert_simplifies_correctly(command, expected_command)
+    
+    def test_insert_simplification_handles_multiple_inserts(self):
+        command = CommandChain('name', [generate_insert_action('this'), generate_insert_action('is'), generate_key_press_action('a'), generate_insert_action('a'), generate_insert_action('test')], 0, 1)
+        expected_command = CommandChain('name', [generate_insert_action('thisis'), generate_key_press_action('a'), generate_insert_action('atest')], 0, 1)
+        self.assert_command_insert_simplifies_correctly(command, expected_command)
+    
+    def test_insert_simplification_handles_single_insert(self):
+        command = CommandChain('name', [generate_insert_action('this'), generate_key_press_action('a')], 0, 1)
+        expected_command = CommandChain('name', [generate_insert_action('this'), generate_key_press_action('a')], 0, 1)
+        self.assert_command_insert_simplifies_correctly(command, expected_command)
+
+    def assert_command_insert_simplifies_correctly(self, original, expected):
+        simplified_command = compute_insert_simplified_command_chain(original)
+        self.assert_command_chains_match(simplified_command, expected)
+    
+    def assert_command_chains_match(self, actual, expected):
+        self.assertEqual(actual.get_actions(), expected.get_actions())
+        self.assertEqual(actual.get_name(), expected.get_name())
+        self.assertEqual(actual.get_chain_number(), expected.get_chain_number())
+        self.assertEqual(actual.get_chain_ending_index(), expected.get_chain_ending_index())
 
 class TestGeneratingCommandSetFromRecord(unittest.TestCase):
     def test_can_handle_simple_record(self):
@@ -271,6 +296,9 @@ def generate_named_press_a_command_chain(name: str, number: int = 0):
 def generate_simple_command_record():
     record = [generate_rain_as_down_command(), generate_copy_all_command(), generate_press_a_command()]
     return record
+
+def generate_insert_action(text: str):
+    return BasicAction('insert', [text])
 
 def get_command_set_information_matching_actions(command_set, actions):
     def search_condition(command):
