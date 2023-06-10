@@ -303,6 +303,29 @@ class TestConsistentProseSeparatorDetection(unittest.TestCase):
         result: bool = analyzer.is_prose_separator_consistent()
         self.assertEqual(result, expected)
 
+class TestDetectingProseCases(unittest.TestCase):
+    def test_handles_single_lowercase_word(self):
+        self.assert_prose_cases_match_expected('word', 'word', 'lower')
+    
+    def test_handles_single_upper_case_word(self):
+        self.assert_prose_cases_match_expected('WORD', 'word', 'upper')
+    
+    def test_handles_single_capitalized_word(self):
+        self.assert_prose_cases_match_expected('Word', 'word', 'capitalized')
+
+    def test_handles_single_uppercase_character(self):
+        self.assert_prose_cases_match_expected('A', 'a', 'upper')
+    
+    def test_handles_camel_case_correctly(self):
+        self.assert_prose_cases_match_expected('thisIsATest', 'this is a test', 'lower capitalized upper capitalized')
+
+    def assert_prose_cases_match_expected(self, text: str, prose: str, expected: str):
+        analyzer = TextSeparationAnalyzer(text)
+        analyzer.search_for_prose_in_separated_part(prose)
+        case_string = compute_case_string_for_prose(analyzer)
+        self.assertEqual(case_string, expected)
+
+
 def command_set_matches_expected_potential_command_information(command_set, expected):
     if command_set.get_size() != len(expected):
         print(f'Incorrect size! Expected {len(expected)} but received {command_set.get_size()}')
