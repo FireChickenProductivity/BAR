@@ -318,13 +318,21 @@ class TestDetectingProseCases(unittest.TestCase):
     
     def test_handles_camel_case_correctly(self):
         self.assert_prose_cases_match_expected('thisIsATest', 'this is a test', 'lower capitalized upper capitalized')
+    
+    def test_handles_snake_case_correctly(self):
+        self.assert_prose_cases_match_expected('this_is_a_test', 'this is a test', 'lower lower lower lower')
+    
+    def test_handles_substring_prose(self):
+        self.assert_prose_cases_match_expected('yesthisIsaTESThere', 'this is a test', 'lower capitalized lower upper')
+    
+    def test_handles_separated_substring(self):
+        self.assert_prose_cases_match_expected('stuff!THIS_IS_A_TEST!stuff', 'this is a test', 'upper upper upper upper')
 
     def assert_prose_cases_match_expected(self, text: str, prose: str, expected: str):
         analyzer = TextSeparationAnalyzer(text)
         analyzer.search_for_prose_in_separated_part(prose)
         case_string = compute_case_string_for_prose(analyzer)
         self.assertEqual(case_string, expected)
-
 
 def command_set_matches_expected_potential_command_information(command_set, expected):
     if command_set.get_size() != len(expected):
