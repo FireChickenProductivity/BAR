@@ -364,6 +364,19 @@ def compute_case_string(text: str) -> str:
     elif text[0].isupper() and text[1:].islower(): return 'capitalized'
     else: raise InvalidCaseException()
 
+def compute_simplified_case_strings_list(case_strings: List) -> List:
+    simplified_case_strings = []
+    new_case_found = False
+    final_case = case_strings[-1]
+    simplified_case_strings.append(final_case)
+    for index in range(len(case_strings) - 2, -1, -1):
+        case = case_strings[index]
+        if case != final_case or new_case_found:
+            simplified_case_strings.append(case)
+            new_case_found = True
+    simplified_case_strings.reverse()
+    return simplified_case_strings
+
 def compute_case_string_for_prose(analyzer: TextSeparationAnalyzer):
     prose = analyzer.compute_prose_portion_of_text()
     case_strings = [compute_case_string(prose_word) for prose_word in prose]
