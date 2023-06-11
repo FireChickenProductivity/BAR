@@ -4,7 +4,7 @@ from typing import List
 module = Module()
 @module.action_class
 class Actions:
-    def basic_action_recorder_command_action_insert_formatted_text(text: str, formats: str, separator: str = ''):
+    def fire_chicken_auto_generated_command_action_insert_formatted_text(text: str, formats: str, separator: str = ''):
         ''''''
         words = get_space_separated_text(text)
         formatter = Formatter(formats, separator)
