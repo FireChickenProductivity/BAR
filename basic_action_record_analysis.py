@@ -402,6 +402,22 @@ def make_abstract_representation_for_prose_command(command_chain, analyzer: Text
     new_command = compute_command_chain_copy_with_new_name_and_actions(command_chain, command_chain.get_name() + '<user.text>', new_actions)
     return new_command
 
+class InsertAction:
+    def __init__(self, text: str, index: int):
+        self.text = text
+        self.index = index
+
+def obtain_inserts_from_command_chain(command_chain):
+    return [InsertAction(action.get_arguments()[0], index) for index, action in enumerate(command_chain.get_actions()) if action.get_name() == 'insert']
+
+def make_abstract_prose_representations_for_command_given_inserts(command_chain, inserts, max_prose_size_to_consider):
+    pass
+
+def make_abstract_prose_representations_for_command(command_chain, max_prose_size_to_consider = 10):
+    inserts = obtain_inserts_from_command_chain(command_chain)
+    if len(inserts) == 0: return []
+    else: return make_abstract_prose_representations_for_command_given_inserts(command_chain, inserts, max_prose_size_to_consider)
+
 def basic_command_filter(command: PotentialCommandInformation):
     return command.get_average_words_dictated() > 1 and command.get_number_of_times_used() > 1 and \
             (not command.is_abstract() or command.get_number_of_instantiations() > 2) and \
