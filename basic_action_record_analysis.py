@@ -145,6 +145,9 @@ def should_make_abstract_repeat_representation(command):
         return False
     return any(action.get_name() == 'repeat' for action in actions)
 
+def compute_command_chain_copy_with_new_name_and_actions(command_chain, new_name, new_actions):
+    return CommandChain(new_name, new_actions, command_chain.get_chain_number(), command_chain.get_size())
+
 def make_abstract_repeat_representation_for(command_chain):
     actions = command_chain.get_actions()
     instances = 0
@@ -159,7 +162,7 @@ def make_abstract_repeat_representation_for(command_chain):
             new_name += ' ' + argument.compute_command_component()
         else:
             new_actions.append(action)
-    new_command = CommandChain(new_name, new_actions, command_chain.get_chain_number(), command_chain.get_size())
+    new_command = compute_command_chain_copy_with_new_name_and_actions(command_chain, new_name, new_actions)
     return new_command
 
 def is_character_alpha(character: str):
@@ -301,6 +304,11 @@ class TextSeparationAnalyzer:
     def is_prose_separator_consistent(self):
         return self.is_separator_consistent(self.prose_index, self.final_prose_index_into_separated_parts)
 
+    def get_first_prose_separator(self) -> str:
+        separators = self.text_separation.get_separators()
+        if self.prose_index < len(separators): return separators[self.prose_index]
+        else: return ''
+
     def has_found_prose(self):
         return self.found_prose
     
@@ -382,6 +390,17 @@ def compute_case_string_for_prose(analyzer: TextSeparationAnalyzer):
     case_strings = [compute_case_string(prose_word) for prose_word in prose]
     case_string = ' '.join(case_strings)
     return case_string
+
+def make_abstract_representation_for_prose_command(command_chain, analyzer: TextSeparationAnalyzer, prose, insert_to_modify_index: int):
+    actions = command_chain.get_actions()
+    new_actions = actions[:insert_to_modify_index]
+    text_before = analyzer.compute_text_before_prose()
+    if text_before: new_actions.append(BasicAction('insert', [text_before]))
+    new_actions.append(BasicAction('fire_chicken_auto_generated_command_action_insert_formatted_text', [prose, compute_case_string_for_prose(analyzer), analyzer.get_first_prose_separator()]))
+    text_after = analyzer.compute_text_after_prose()
+    if text_after: new_actions.append(BasicAction('insert', [text_after]))
+    new_command = compute_command_chain_copy_with_new_name_and_actions(command_chain, command_chain.get_name() + '<user.text>', new_actions)
+    return new_command
 
 def basic_command_filter(command: PotentialCommandInformation):
     return command.get_average_words_dictated() > 1 and command.get_number_of_times_used() > 1 and \
