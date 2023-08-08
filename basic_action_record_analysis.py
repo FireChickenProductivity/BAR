@@ -411,15 +411,25 @@ def obtain_inserts_from_command_chain(command_chain):
     return [InsertAction(action.get_arguments()[0], index) for index, action in enumerate(command_chain.get_actions()) if action.get_name() == 'insert']
 
 def find_prose_matches_for_command_given_insert(command_chain, insert, max_prose_size_to_consider):
-    pass
+    dictation: str = command_chain.get_name()
+    words = dictation.split(' ')
+    matches = []
+    for starting_index in len(words):
+        for prose_size in len(1, max_prose_size_to_consider):
+            prose = ' '.join(words[starting_index:prose_size])
+            analyzer = TextSeparationAnalyzer(insert.text)
+            analyzer.search_for_prose_in_separated_part(prose)
+            if analyzer.is_prose_separator_consistent() and analyzer.has_found_prose():
+                matches.append((prose, analyzer))
+            else:
+                break
+    return matches
 
 def make_abstract_prose_representations_for_command_given_inserts(command_chain, inserts, max_prose_size_to_consider):
     abstract_representations = []
     for insert in inserts:
         prose_matches = find_prose_matches_for_command_given_insert(command_chain, insert, max_prose_size_to_consider)
-        for match in prose_matches:
-            analyzer = TextSeparationAnalyzer(insert.text)
-            analyzer.search_for_prose_in_separated_part(match)
+        for match, analyzer in prose_matches:
             abstract_representation = make_abstract_representation_for_prose_command(command_chain, analyzer, match, insert.index)
             abstract_representations.append(abstract_representation)
     return abstract_representations
