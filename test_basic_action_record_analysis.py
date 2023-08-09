@@ -320,13 +320,13 @@ class TestDetectingProseCases(unittest.TestCase):
         self.assert_prose_cases_match_expected('thisIsATest', 'this is a test', 'lower capitalized upper capitalized')
     
     def test_handles_snake_case_correctly(self):
-        self.assert_prose_cases_match_expected('this_is_a_test', 'this is a test', 'lower lower lower lower')
+        self.assert_prose_cases_match_expected('this_is_a_test', 'this is a test', 'lower')
     
     def test_handles_substring_prose(self):
         self.assert_prose_cases_match_expected('yesthisIsaTESThere', 'this is a test', 'lower capitalized lower upper')
     
     def test_handles_separated_substring(self):
-        self.assert_prose_cases_match_expected('stuff!THIS_IS_A_TEST!stuff', 'this is a test', 'upper upper upper upper')
+        self.assert_prose_cases_match_expected('stuff!THIS_IS_A_TEST!stuff', 'this is a test', 'upper')
 
     def assert_prose_cases_match_expected(self, text: str, prose: str, expected: str):
         analyzer = TextSeparationAnalyzer(text)
@@ -350,6 +350,20 @@ class TestProseCasesSimplification(unittest.TestCase):
     def assert_simplification_matches_expected(self, original, expected):
         actual = compute_simplified_case_strings_list(original)
         self.assertEqual(actual, expected)
+    
+class TestGettingFirstSeparator(unittest.TestCase):
+    def test_handles_single_word_no_separator(self):
+        self.assert_separator_matches_expected('this', 'this', '')
+
+    def test_handles_single_word_in_text_with_no_internal_separator(self):
+        self.assert_separator_matches_expected('stuff this test', 'this', '')
+        
+    def assert_separator_matches_expected(self, text: str, prose: str, expected: str):
+        analyzer = TextSeparationAnalyzer(text)
+        analyzer.search_for_prose_in_separated_part(prose)
+        actual = analyzer.get_first_prose_separator()
+        self.assertEqual(actual, expected)
+
 
 def command_set_matches_expected_potential_command_information(command_set, expected):
     if command_set.get_size() != len(expected):
