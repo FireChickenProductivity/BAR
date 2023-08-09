@@ -415,8 +415,9 @@ def find_prose_matches_for_command_given_insert(command_chain, insert, max_prose
     words = dictation.split(' ')
     matches = []
     for starting_index in len(words):
-        for prose_size in len(1, max_prose_size_to_consider):
-            prose = ' '.join(words[starting_index:prose_size])
+        maximum_size = min(max_prose_size_to_consider, len(words) - starting_index + 1)
+        for prose_size in len(1, maximum_size):
+            prose = ' '.join(words[starting_index:starting_index + prose_size])
             analyzer = TextSeparationAnalyzer(insert.text)
             analyzer.search_for_prose_in_separated_part(prose)
             if analyzer.is_prose_separator_consistent() and analyzer.has_found_prose():
