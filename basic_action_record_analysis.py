@@ -396,10 +396,11 @@ def make_abstract_representation_for_prose_command(command_chain, analyzer: Text
     new_actions = actions[:insert_to_modify_index]
     text_before = analyzer.compute_text_before_prose()
     if text_before: new_actions.append(BasicAction('insert', [text_before]))
-    new_actions.append(BasicAction('fire_chicken_auto_generated_command_action_insert_formatted_text', [prose, compute_case_string_for_prose(analyzer), analyzer.get_first_prose_separator()]))
+    prose_argument = TalonCapture('user.text', 1)
+    new_actions.append(BasicAction('fire_chicken_auto_generated_command_action_insert_formatted_text', [prose_argument, compute_case_string_for_prose(analyzer), analyzer.get_first_prose_separator()]))
     text_after = analyzer.compute_text_after_prose()
     if text_after: new_actions.append(BasicAction('insert', [text_after]))
-    new_command = compute_command_chain_copy_with_new_name_and_actions(command_chain, command_chain.get_name() + '<user.text>', new_actions)
+    new_command = compute_command_chain_copy_with_new_name_and_actions(command_chain, command_chain.get_name() + ' <user.text>', new_actions)
     return new_command
 
 class InsertAction:
