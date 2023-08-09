@@ -306,7 +306,7 @@ class TextSeparationAnalyzer:
 
     def get_first_prose_separator(self) -> str:
         separators = self.text_separation.get_separators()
-        if self.prose_index < len(separators): return separators[self.prose_index]
+        if self.prose_index < len(separators) and self.prose_index != self.final_prose_index_into_separated_parts: return separators[self.prose_index]
         else: return ''
 
     def has_found_prose(self):
