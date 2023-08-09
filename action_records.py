@@ -42,11 +42,16 @@ class BasicAction:
     def __eq__(self, other) -> bool:
         return other is not None and self.name == other.name and self.arguments == other.arguments
 
+PRIMITIVES = (int, str, bool, float)
+
 class BasicActionEncoder(json.JSONEncoder):
     def default(self, object):
         if isinstance(object, TalonCapture):
             return object.to_json()
-        return json.JSONEncoder.default(self, object)
+        elif type(object) in PRIMITIVES:
+            return json.JSONEncoder.default(self, object)
+        else:
+            return str(object)
 
 def compute_talon_script_boolean_value(value: bool):
     if value:
