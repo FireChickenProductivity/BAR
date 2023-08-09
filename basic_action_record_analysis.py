@@ -391,7 +391,7 @@ def compute_case_string_for_prose(analyzer: TextSeparationAnalyzer):
     case_string = ' '.join(case_strings)
     return case_string
 
-def make_abstract_representation_for_prose_command(command_chain, analyzer: TextSeparationAnalyzer, prose, insert_to_modify_index: int):
+def make_abstract_representation_for_prose_command(command_chain, analyzer: TextSeparationAnalyzer, insert_to_modify_index: int):
     actions = command_chain.get_actions()
     new_actions = actions[:insert_to_modify_index]
     text_before = analyzer.compute_text_before_prose()
@@ -432,7 +432,7 @@ def make_abstract_prose_representations_for_command_given_inserts(command_chain,
     for insert in inserts:
         prose_matches = find_prose_matches_for_command_given_insert(command_chain, insert, max_prose_size_to_consider)
         for match, analyzer in prose_matches:
-            abstract_representation = make_abstract_representation_for_prose_command(command_chain, analyzer, match, insert.index)
+            abstract_representation = make_abstract_representation_for_prose_command(command_chain, analyzer, insert.index)
             abstract_representations.append(abstract_representation)
     return abstract_representations
 
