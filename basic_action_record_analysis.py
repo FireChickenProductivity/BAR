@@ -388,7 +388,8 @@ def compute_simplified_case_strings_list(case_strings: List) -> List:
 def compute_case_string_for_prose(analyzer: TextSeparationAnalyzer):
     prose = analyzer.compute_prose_portion_of_text()
     case_strings = [compute_case_string(prose_word) for prose_word in prose]
-    case_string = ' '.join(case_strings)
+    simplified_case_strings = compute_simplified_case_strings_list(case_strings)
+    case_string = ' '.join(simplified_case_strings)
     return case_string
 
 def make_abstract_representation_for_prose_command(command_chain, analyzer: TextSeparationAnalyzer, insert_to_modify_index: int):
