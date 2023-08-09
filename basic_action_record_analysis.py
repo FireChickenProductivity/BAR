@@ -328,7 +328,7 @@ class TextSeparationAnalyzer:
         text: str = ''
         first_word: str = separated_parts[self.final_prose_index_into_separated_parts]
         if self.prose_ending_index < len(first_word): text += first_word[self.prose_ending_index:]
-        if self.prose_index < len(separators): text += separators[self.final_prose_index_into_separated_parts] 
+        if self.final_prose_index_into_separated_parts < len(separators): text += separators[self.final_prose_index_into_separated_parts]
         for index in range(self.final_prose_index_into_separated_parts + 1, len(separated_parts)):
             text += separated_parts[index]
             if index < len(separators): text += separators[index]
@@ -415,9 +415,9 @@ def find_prose_matches_for_command_given_insert(command_chain, insert, max_prose
     dictation: str = command_chain.get_name()
     words = dictation.split(' ')
     matches = []
-    for starting_index in len(words):
+    for starting_index in range(len(words)):
         maximum_size = min(max_prose_size_to_consider, len(words) - starting_index + 1)
-        for prose_size in len(1, maximum_size):
+        for prose_size in range(1, maximum_size):
             prose = ' '.join(words[starting_index:starting_index + prose_size])
             analyzer = TextSeparationAnalyzer(insert.text)
             analyzer.search_for_prose_in_separated_part(prose)
@@ -465,6 +465,8 @@ class CommandInformationSet:
         if should_make_abstract_repeat_representation(command_chain):
             abstract_repeat_representation = make_abstract_repeat_representation_for(command_chain)
             commands.append(abstract_repeat_representation)
+        abstract_prose_commands = make_abstract_prose_representations_for_command(command_chain)
+        commands.extend(abstract_prose_commands)
         return commands
     
     def handle_needed_abstract_commands(self, command_chain):
