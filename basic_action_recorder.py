@@ -153,27 +153,27 @@ class MainActions:
         recorder.stop_temporarily_rejecting_actions()
         if history_was_recording:
             history.start_recording_history()
-        recorder.record_basic_action('insert', [text])
+        recorder.record_basic_action('insert', [str(text)])
         history.record_action(compute_insert_description(text))
 
     def key(key: str):
         actions.next(key)
-        recorder.record_basic_action('key', [key])
+        recorder.record_basic_action('key', [str(key)])
         history.record_action(compute_key_description(key))
 
     def mouse_click(button: int = 0):
         actions.next(button)
-        recorder.record_basic_action('mouse_click', [button])
+        recorder.record_basic_action('mouse_click', [int(button)])
         history.record_action(compute_mouse_click_description(button))
 
     def mouse_move(x: float, y: float):
         actions.next(x, y)
-        recorder.record_basic_action('mouse_move', [x, y])
+        recorder.record_basic_action('mouse_move', [float(x), float(y)])
         history.record_action(compute_mouse_movement_description(x, y))
 
     def mouse_scroll(y: float = 0, x: float = 0, by_lines: bool = False):
         actions.next(y, x, by_lines)
-        recorder.record_basic_action('mouse_scroll', [y, x, by_lines])
+        recorder.record_basic_action('mouse_scroll', [float(y), float(x), bool(by_lines)])
         history.record_action(compute_mouse_scroll_description(y, x, by_lines))
 
 def compute_insert_description(text: str):
