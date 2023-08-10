@@ -385,6 +385,33 @@ class TestMakeAbstractRepresentationForProseCommand(unittest.TestCase):
         expected_actions = [generate_abstract_prose_action('lower', '')]
         expected_command_chain = generate_prose_command_chain_with_actions(expected_actions)
         self.assert_actual_matches_expected_given_arguments(input_command_chain, prose, insert_to_modify_index, expected_command_chain)
+    
+    def test_handles_insert_only_with_text_to_the_left(self):
+        actions = [generate_insert_action('prefixed_simple')]
+        input_command_chain = generate_command_chain_with_actions(actions)
+        prose = 'simple'
+        insert_to_modify_index = 0
+        expected_actions = [generate_insert_action('prefixed_'), generate_abstract_prose_action('lower', '')]
+        expected_command_chain = generate_prose_command_chain_with_actions(expected_actions)
+        self.assert_actual_matches_expected_given_arguments(input_command_chain, prose, insert_to_modify_index, expected_command_chain)
+    
+    def test_handles_insert_only_with_text_to_the_right(self):
+        actions = [generate_insert_action('simple_text_postfix_text')]
+        input_command_chain = generate_command_chain_with_actions(actions)
+        prose = 'simple text'
+        insert_to_modify_index = 0
+        expected_actions = [generate_abstract_prose_action('lower', '_'), generate_insert_action('_postfix_text')]
+        expected_command_chain = generate_prose_command_chain_with_actions(expected_actions)
+        self.assert_actual_matches_expected_given_arguments(input_command_chain, prose, insert_to_modify_index, expected_command_chain)
+    
+    def test_handles_insert_only_with_text_on_both_sides(self):
+        actions = [generate_insert_action('prefixsimple_text_postfix_text')]
+        input_command_chain = generate_command_chain_with_actions(actions)
+        prose = 'simple text'
+        insert_to_modify_index = 0
+        expected_actions = [generate_insert_action('prefix'), generate_abstract_prose_action('lower', '_'), generate_insert_action('_postfix_text')]
+        expected_command_chain = generate_prose_command_chain_with_actions(expected_actions)
+        self.assert_actual_matches_expected_given_arguments(input_command_chain, prose, insert_to_modify_index, expected_command_chain)
 
     def assert_actual_matches_expected_given_arguments(self, command_chain, prose: str, insert_to_modify_index: int, expected):
         text = command_chain.get_actions()[insert_to_modify_index].get_arguments()[0]
