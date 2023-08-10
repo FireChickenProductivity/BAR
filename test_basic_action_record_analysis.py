@@ -377,14 +377,30 @@ class TestGettingFirstSeparator(unittest.TestCase):
         self.assertEqual(actual, expected)
     
 class TestMakeAbstractRepresentationForProseCommand(unittest.TestCase):
-    
+    def test_handles_simple_insert_only(self):
+        actions = [generate_insert_action('simple')]
+        input_command_chain = generate_command_chain_with_actions(actions)
+        prose = 'simple'
+        insert_to_modify_index = 0
+        expected_actions = [generate_abstract_prose_action('lower', '')]
+        expected_command_chain = generate_command_chain_with_actions(expected_actions)
+        self.assert_actual_matches_expected_given_arguments(input_command_chain, prose, insert_to_modify_index, expected_command_chain)
 
     def assert_actual_matches_expected_given_arguments(self, command_chain, prose: str, insert_to_modify_index: int, expected):
-        text = command_chain.get_arguments()[insert_to_modify_index][0]
+        text = command_chain.get_actions()[insert_to_modify_index].get_arguments()[0]
         analyzer = TextSeparationAnalyzer(text)
         analyzer.search_for_prose_in_separated_part(prose)
         actual = make_abstract_representation_for_prose_command(command_chain, analyzer, insert_to_modify_index)
         assert_command_chains_match(self, actual, expected)
+
+def generate_abstract_prose_action(case_string: str, first_prose_separator: str):
+    prose_argument = TalonCapture('user.text', 1)
+    action = BasicAction('user.fire_chicken_auto_generated_command_action_insert_formatted_text', [prose_argument, case_string, first_prose_separator])
+    return action
+
+def generate_command_chain_with_actions(actions):
+    result = CommandChain('name', actions, 0, 1)
+    return result
 
 def assert_command_chains_match(test_object, actual, expected):
     test_object.assertEqual(actual.get_actions(), expected.get_actions())
