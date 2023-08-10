@@ -109,11 +109,8 @@ class TestCommandSimplification(unittest.TestCase):
         self.assert_command_chains_match(simplified_command, expected)
     
     def assert_command_chains_match(self, actual, expected):
-        self.assertEqual(actual.get_actions(), expected.get_actions())
-        self.assertEqual(actual.get_name(), expected.get_name())
-        self.assertEqual(actual.get_chain_number(), expected.get_chain_number())
-        self.assertEqual(actual.get_chain_ending_index(), expected.get_chain_ending_index())
-
+        assert_command_chains_match(self, actual, expected)
+    
 class TestGeneratingCommandSetFromRecord(unittest.TestCase):
     def test_can_handle_simple_record(self):
         record = generate_simple_command_record()
@@ -378,7 +375,22 @@ class TestGettingFirstSeparator(unittest.TestCase):
         analyzer.search_for_prose_in_separated_part(prose)
         actual = analyzer.get_first_prose_separator()
         self.assertEqual(actual, expected)
+    
+class TestMakeAbstractRepresentationForProseCommand(unittest.TestCase):
+    
 
+    def assert_actual_matches_expected_given_arguments(self, command_chain, prose: str, insert_to_modify_index: int, expected):
+        text = command_chain.get_arguments()[insert_to_modify_index][0]
+        analyzer = TextSeparationAnalyzer(text)
+        analyzer.search_for_prose_in_separated_part(prose)
+        actual = make_abstract_representation_for_prose_command(command_chain, analyzer, insert_to_modify_index)
+        assert_command_chains_match(self, actual, expected)
+
+def assert_command_chains_match(test_object, actual, expected):
+    test_object.assertEqual(actual.get_actions(), expected.get_actions())
+    test_object.assertEqual(actual.get_name(), expected.get_name())
+    test_object.assertEqual(actual.get_chain_number(), expected.get_chain_number())
+    test_object.assertEqual(actual.get_chain_ending_index(), expected.get_chain_ending_index())
 
 def command_set_matches_expected_potential_command_information(command_set, expected):
     if command_set.get_size() != len(expected):
