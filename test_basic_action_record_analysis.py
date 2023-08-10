@@ -383,7 +383,7 @@ class TestMakeAbstractRepresentationForProseCommand(unittest.TestCase):
         prose = 'simple'
         insert_to_modify_index = 0
         expected_actions = [generate_abstract_prose_action('lower', '')]
-        expected_command_chain = generate_command_chain_with_actions(expected_actions)
+        expected_command_chain = generate_prose_command_chain_with_actions(expected_actions)
         self.assert_actual_matches_expected_given_arguments(input_command_chain, prose, insert_to_modify_index, expected_command_chain)
 
     def assert_actual_matches_expected_given_arguments(self, command_chain, prose: str, insert_to_modify_index: int, expected):
@@ -397,6 +397,10 @@ def generate_abstract_prose_action(case_string: str, first_prose_separator: str)
     prose_argument = TalonCapture('user.text', 1)
     action = BasicAction('user.fire_chicken_auto_generated_command_action_insert_formatted_text', [prose_argument, case_string, first_prose_separator])
     return action
+
+def generate_prose_command_chain_with_actions(actions):
+    result = CommandChain('name <user.text>', actions, 0, 1)
+    return result
 
 def generate_command_chain_with_actions(actions):
     result = CommandChain('name', actions, 0, 1)
