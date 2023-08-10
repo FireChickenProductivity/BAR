@@ -357,6 +357,21 @@ class TestGettingFirstSeparator(unittest.TestCase):
 
     def test_handles_single_word_in_text_with_no_internal_separator(self):
         self.assert_separator_matches_expected('stuff this test', 'this', '')
+    
+    def test_handles_two_words_with_separator(self):
+        self.assert_separator_matches_expected('two  words', 'two words', '  ')
+    
+    def test_handles_two_words_in_text_with_separator(self):
+        self.assert_separator_matches_expected('This contains two_words in the middle', 'two words', '_')
+    
+    def test_handles_three_words_in_text(self):
+        self.assert_separator_matches_expected('this_is_a_bigger_test_case', 'bigger test', '_')
+    
+    def test_handles_two_words_at_beginning(self):
+        self.assert_separator_matches_expected('two_words_at_the_beginning', 'two words', '_')
+    
+    def test_handles_two_words_at_ending(self):
+        self.assert_separator_matches_expected('at_ending_there_are_two_words', 'two words', '_')
         
     def assert_separator_matches_expected(self, text: str, prose: str, expected: str):
         analyzer = TextSeparationAnalyzer(text)
