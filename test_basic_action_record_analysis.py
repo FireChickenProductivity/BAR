@@ -447,6 +447,30 @@ class TestMakeAbstractRepresentationForProseCommand(unittest.TestCase):
         actual = make_abstract_representation_for_prose_command(command_chain, analyzer, insert_to_modify_index)
         assert_command_chains_match(self, actual, expected)
 
+class TestObtainInsertsFromCommandChain(unittest.TestCase):
+    def test_handles_empty_command_chain(self):
+        input = generate_command_chain_with_actions([])
+        expected = []
+        actual = obtain_inserts_from_command_chain(input)
+        self.assert_insert_lists_match(actual, expected)
+    
+    def test_handles_no_inserts(self):
+        actions = [generate_press_a_action(), generate_key_press_action('ctrl-t'), BasicAction('mouse_click', [1])]
+        input = generate_command_chain_with_actions(actions)
+        expected = []
+        actual = obtain_inserts_from_command_chain(input)
+        self.assert_insert_lists_match(actual, expected)
+
+    def assert_insert_lists_match(self, actual, expected):
+        self.assertEqual(len(actual), len(expected))
+        for index in range(len(actual)): self.assert_inserts_match(actual[index], expected[index])
+
+    def assert_inserts_match(self, actual, expected):
+        self.assertEqual(actual.text, expected.text)
+        self.assertEqual(actual.index, expected.index)
+
+
+
 def generate_abstract_prose_action(case_string: str, first_prose_separator: str):
     prose_argument = TalonCapture('user.text', 1)
     action = BasicAction('user.fire_chicken_auto_generated_command_action_insert_formatted_text', [prose_argument, case_string, first_prose_separator])
