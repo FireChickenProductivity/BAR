@@ -468,6 +468,21 @@ class TestObtainInsertsFromCommandChain(unittest.TestCase):
         expected = [InsertAction('testing', 0), InsertAction('last', 1)]
         self.assert_gets_expected_list_given_input(expected, actions)
 
+    def test_detects_insert_after_action(self):
+        actions = [generate_press_a_action(), generate_insert_action('last')]
+        expected = [InsertAction('last', 1)]
+        self.assert_gets_expected_list_given_input(expected, actions)
+    
+    def test_detect_insert_before_action(self):
+        actions = [generate_insert_action('testing'), generate_press_a_action()]
+        expected = [InsertAction('testing', 0)]
+        self.assert_gets_expected_list_given_input(expected, actions)
+    
+    def test_detect_inserts_between_actions(self):
+        actions = [generate_press_a_action(), generate_insert_action('testing'), generate_insert_action('last'), generate_press_a_action()]
+        expected = [InsertAction('testing', 1), InsertAction('last', 2)]
+        self.assert_gets_expected_list_given_input(expected, actions)
+
     def assert_gets_expected_list_given_input(self, expected, actions):
         input = generate_command_chain_with_actions(actions)
         actual = obtain_inserts_from_command_chain(input)
