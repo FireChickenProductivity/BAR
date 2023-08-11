@@ -449,29 +449,27 @@ class TestMakeAbstractRepresentationForProseCommand(unittest.TestCase):
 
 class TestObtainInsertsFromCommandChain(unittest.TestCase):
     def test_handles_empty_command_chain(self):
-        input = generate_command_chain_with_actions([])
+        actions = []
         expected = []
-        self.assert_gets_expected_list_given_input(expected, input)
+        self.assert_gets_expected_list_given_input(expected, actions)
     
     def test_handles_no_inserts(self):
         actions = [generate_press_a_action(), generate_key_press_action('ctrl-t'), BasicAction('mouse_click', [1])]
-        input = generate_command_chain_with_actions(actions)
         expected = []
-        self.assert_gets_expected_list_given_input(expected, input)
+        self.assert_gets_expected_list_given_input(expected, actions)
     
     def test_detects_single_insert(self):
         actions = [generate_insert_action('testing')]
-        input = generate_command_chain_with_actions(actions)
         expected = [InsertAction('testing', 0)]
-        self.assert_gets_expected_list_given_input(expected, input)
+        self.assert_gets_expected_list_given_input(expected, actions)
     
     def test_detects_multiple_inserts(self):
         actions = [generate_insert_action('testing'), generate_insert_action('last')]
-        input = generate_command_chain_with_actions(actions)
         expected = [InsertAction('testing', 0), InsertAction('last', 1)]
-        self.assert_gets_expected_list_given_input(expected, input)
+        self.assert_gets_expected_list_given_input(expected, actions)
 
-    def assert_gets_expected_list_given_input(self, expected, input):
+    def assert_gets_expected_list_given_input(self, expected, actions):
+        input = generate_command_chain_with_actions(actions)
         actual = obtain_inserts_from_command_chain(input)
         self.assert_insert_lists_match(actual, expected)
 
