@@ -101,6 +101,9 @@ class Command:
     
     def has_same_actions_as(self, other):
         return self.actions == other.actions
+    
+    def set_name(self, name: str):
+        self.name = name
 
 class CommandChain(Command):
     def __init__(self, name: str, actions, chain_number: int = 0, chain_size: int = 0):
