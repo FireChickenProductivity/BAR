@@ -402,7 +402,7 @@ def make_abstract_representation_for_prose_command(command_chain, analyzer: Text
     text_after = analyzer.compute_text_after_prose()
     if text_after: new_actions.append(BasicAction('insert', [text_after]))
     if insert_to_modify_index + 1 < len(actions): new_actions.extend(actions[insert_to_modify_index + 1:])
-    new_command = compute_command_chain_copy_with_new_name_and_actions(command_chain, command_chain.get_name() + ' <user.text>', new_actions)
+    new_command = compute_command_chain_copy_with_new_name_and_actions(command_chain, command_chain.get_name(), new_actions)
     return new_command
 
 class InsertAction:
@@ -424,7 +424,8 @@ def find_prose_matches_for_command_given_insert(command_chain, insert, max_prose
             analyzer = TextSeparationAnalyzer(insert.text)
             analyzer.search_for_prose_in_separated_part(prose)
             if analyzer.is_prose_separator_consistent() and analyzer.has_found_prose():
-                matches.append(analyzer)
+                command_name = ' '.join(words[starting_index]) + '<user.text>' + ' '.join(words[starting_index + prose_size:])
+                matches.append((analyzer, command_name))
             else:
                 break
     return matches
@@ -433,9 +434,10 @@ def make_abstract_prose_representations_for_command_given_inserts(command_chain,
     abstract_representations = []
     for insert in inserts:
         prose_matches = find_prose_matches_for_command_given_insert(command_chain, insert, max_prose_size_to_consider)
-        for analyzer in prose_matches:
+        for analyzer, command_name in prose_matches:
             try:
                 abstract_representation = make_abstract_representation_for_prose_command(command_chain, analyzer, insert.index)
+                abstract_representation.set_name(command_name)
                 abstract_representations.append(abstract_representation)
             except InvalidCaseException: pass
     return abstract_representations
