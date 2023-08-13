@@ -383,7 +383,7 @@ class TestMakeAbstractRepresentationForProseCommand(unittest.TestCase):
         prose = 'simple'
         insert_to_modify_index = 0
         expected_actions = [generate_abstract_prose_action('lower', '')]
-        expected_command_chain = generate_prose_command_chain_with_actions(expected_actions)
+        expected_command_chain = generate_command_chain_with_actions(expected_actions)
         self.assert_actual_matches_expected_given_arguments(input_command_chain, prose, insert_to_modify_index, expected_command_chain)
     
     def test_handles_insert_only_with_text_to_the_left(self):
@@ -392,7 +392,7 @@ class TestMakeAbstractRepresentationForProseCommand(unittest.TestCase):
         prose = 'simple'
         insert_to_modify_index = 0
         expected_actions = [generate_insert_action('prefixed_'), generate_abstract_prose_action('lower', '')]
-        expected_command_chain = generate_prose_command_chain_with_actions(expected_actions)
+        expected_command_chain = generate_command_chain_with_actions(expected_actions)
         self.assert_actual_matches_expected_given_arguments(input_command_chain, prose, insert_to_modify_index, expected_command_chain)
     
     def test_handles_insert_only_with_text_to_the_right(self):
@@ -401,7 +401,7 @@ class TestMakeAbstractRepresentationForProseCommand(unittest.TestCase):
         prose = 'simple text'
         insert_to_modify_index = 0
         expected_actions = [generate_abstract_prose_action('lower', '_'), generate_insert_action('_postfix_text')]
-        expected_command_chain = generate_prose_command_chain_with_actions(expected_actions)
+        expected_command_chain = generate_command_chain_with_actions(expected_actions)
         self.assert_actual_matches_expected_given_arguments(input_command_chain, prose, insert_to_modify_index, expected_command_chain)
     
     def test_handles_insert_only_with_text_on_both_sides(self):
@@ -410,7 +410,7 @@ class TestMakeAbstractRepresentationForProseCommand(unittest.TestCase):
         prose = 'simple text'
         insert_to_modify_index = 0
         expected_actions = [generate_insert_action('prefix'), generate_abstract_prose_action('lower', '_'), generate_insert_action('_postfix_text')]
-        expected_command_chain = generate_prose_command_chain_with_actions(expected_actions)
+        expected_command_chain = generate_command_chain_with_actions(expected_actions)
         self.assert_actual_matches_expected_given_arguments(input_command_chain, prose, insert_to_modify_index, expected_command_chain)
     
     def test_handles_prior_actions(self):
@@ -419,7 +419,7 @@ class TestMakeAbstractRepresentationForProseCommand(unittest.TestCase):
         prose = 'simple'
         insert_to_modify_index = 2
         expected_actions = [generate_press_a_action(), generate_insert_action('test'), generate_abstract_prose_action('lower', '')]
-        expected_command_chain = generate_prose_command_chain_with_actions(expected_actions)
+        expected_command_chain = generate_command_chain_with_actions(expected_actions)
         self.assert_actual_matches_expected_given_arguments(input_command_chain, prose, insert_to_modify_index, expected_command_chain)
     
     def test_handles_subsequent_actions(self):
@@ -428,7 +428,7 @@ class TestMakeAbstractRepresentationForProseCommand(unittest.TestCase):
         prose = 'simple'
         insert_to_modify_index = 0
         expected_actions = [generate_abstract_prose_action('lower', ''), generate_insert_action('test'), generate_press_a_action()]
-        expected_command_chain = generate_prose_command_chain_with_actions(expected_actions)
+        expected_command_chain = generate_command_chain_with_actions(expected_actions)
         self.assert_actual_matches_expected_given_arguments(input_command_chain, prose, insert_to_modify_index, expected_command_chain)
     
     def test_handles_actions_before_and_after(self):
@@ -437,7 +437,7 @@ class TestMakeAbstractRepresentationForProseCommand(unittest.TestCase):
         prose = 'simple'
         insert_to_modify_index = 1
         expected_actions = [generate_insert_action('extra'), generate_abstract_prose_action('lower', ''), generate_insert_action('test'), generate_press_a_action()]
-        expected_command_chain = generate_prose_command_chain_with_actions(expected_actions)
+        expected_command_chain = generate_command_chain_with_actions(expected_actions)
         self.assert_actual_matches_expected_given_arguments(input_command_chain, prose, insert_to_modify_index, expected_command_chain)
 
     def assert_actual_matches_expected_given_arguments(self, command_chain, prose: str, insert_to_modify_index: int, expected):
@@ -502,10 +502,6 @@ def generate_abstract_prose_action(case_string: str, first_prose_separator: str)
     prose_argument = TalonCapture('user.text', 1)
     action = BasicAction('user.fire_chicken_auto_generated_command_action_insert_formatted_text', [prose_argument, case_string, first_prose_separator])
     return action
-
-def generate_prose_command_chain_with_actions(actions):
-    result = CommandChain('name <user.text>', actions, 0, 1)
-    return result
 
 def generate_command_chain_with_actions(actions):
     result = CommandChain('name', actions, 0, 1)
