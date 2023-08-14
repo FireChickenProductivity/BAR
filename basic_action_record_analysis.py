@@ -424,7 +424,10 @@ def find_prose_matches_for_command_given_insert(command_chain, insert, max_prose
             analyzer = TextSeparationAnalyzer(insert.text)
             analyzer.search_for_prose_in_separated_part(prose)
             if analyzer.is_prose_separator_consistent() and analyzer.has_found_prose():
-                command_name = ' '.join(words[starting_index]) + '<user.text>' + ' '.join(words[starting_index + prose_size:])
+                command_name_parts = words[:starting_index]
+                command_name_parts.append('<user.text>')
+                command_name_parts.extend(words[starting_index + prose_size:])
+                command_name = ' '.join(command_name_parts)
                 matches.append((analyzer, command_name))
             else:
                 break
