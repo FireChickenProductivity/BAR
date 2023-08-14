@@ -511,9 +511,20 @@ class TestFindProseMatchesForCommandGivenInsert(unittest.TestCase):
         command_chain = CommandChain(dictation, generate_insert_action(insert_text))
         insert = InsertAction(insert_text, 0)
         expected_names = ['say <user.text> this here', 'say <user.text> here', 'say testing <user.text> here', 'say testing <user.text>', 'say testing this <user.text>']
+        expected_text_before = ['', '', 'testing_', 'testing_', 'testing_this!']
+        expected_text_after = ['_this!here', '!here', '!here', '', '']
         actual = find_prose_matches_for_command_given_insert(command_chain, insert, TEST_MAX_PROSE_SIZE_TO_CONSIDER)
-        names = [match[1] for match in actual]
-        self.assertEqual(names, expected_names)
+        self.assert_actual_matches_expected_names_and_text(actual, expected_names, expected_text_before, expected_text_after)
+    
+    def assert_actual_matches_expected_names_and_text(self, actual, expected_names, expected_text_before, expected_text_after):
+        actual_names = [match[1] for match in actual]
+        actual_analyzers = [match[0] for match in actual]
+        actual_text_before = [analyzer.compute_text_before_prose() for analyzer in actual_analyzers]
+        actual_text_after = [analyzer.compute_text_after_prose() for analyzer in actual_analyzers]
+        self.assertEqual(actual_names, expected_names)
+        self.assertEqual(actual_text_before, expected_text_before)
+        self.assertEqual(actual_text_after, expected_text_after)
+        
 
 def generate_test_insert_action():
     action = generate_insert_action('this is a test')
