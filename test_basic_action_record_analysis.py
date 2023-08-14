@@ -504,6 +504,16 @@ class TestFindProseMatchesForCommandGivenInsert(unittest.TestCase):
         expected = []
         actual = find_prose_matches_for_command_given_insert(command_chain, insert, TEST_MAX_PROSE_SIZE_TO_CONSIDER)
         self.assertEqual(actual, expected)
+    
+    def test_inconsistent_separator_matches_not_included(self):
+        insert_text = 'testing_this!here'
+        dictation = 'say testing this here'
+        command_chain = CommandChain(dictation, generate_insert_action(insert_text))
+        insert = InsertAction(insert_text, 0)
+        expected_names = ['say <user.text> this here', 'say <user.text> here', 'say testing <user.text> here', 'say testing <user.text>', 'say testing this <user.text>']
+        actual = find_prose_matches_for_command_given_insert(command_chain, insert, TEST_MAX_PROSE_SIZE_TO_CONSIDER)
+        names = [match[1] for match in actual]
+        self.assertEqual(names, expected_names)
 
 def generate_test_insert_action():
     action = generate_insert_action('this is a test')
