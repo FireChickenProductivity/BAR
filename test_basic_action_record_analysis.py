@@ -496,7 +496,18 @@ class TestObtainInsertsFromCommandChain(unittest.TestCase):
         self.assertEqual(actual.text, expected.text)
         self.assertEqual(actual.index, expected.index)
 
+TEST_MAX_PROSE_SIZE_TO_CONSIDER = 10
+class TestFindProseMatchesForCommandGivenInsert(unittest.TestCase):
+    def test_no_matching_text_gives_empty_list(self):
+        command_chain = CommandChain('chicken', generate_test_insert_action(), 0, 1)
+        insert = InsertAction('this is a test', 0)
+        expected = []
+        actual = find_prose_matches_for_command_given_insert(command_chain, insert, TEST_MAX_PROSE_SIZE_TO_CONSIDER)
+        self.assertEqual(actual, expected)
 
+def generate_test_insert_action():
+    action = generate_insert_action('this is a test')
+    return action
 
 def generate_abstract_prose_action(case_string: str, first_prose_separator: str):
     prose_argument = TalonCapture('user.text', 1)
