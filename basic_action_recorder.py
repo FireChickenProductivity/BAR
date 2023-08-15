@@ -42,14 +42,13 @@ class ActionRecorder:
 
     def record_action(self, action):
         self.actions.append(action)
+        log('action recorded:', action.get_name(), action.get_arguments(), 'code', action.compute_talon_script())
     
     def record_basic_action(self, name, arguments):
         if not self.temporarily_rejecting_actions:
             if self.recording_actions_in_primary_memory or should_record_in_file.get() or callback_manager.is_listening():
                 action = BasicAction(name, arguments)
-                if self.recording_actions_in_primary_memory:
-                    self.record_action(action)
-                    log('action recorded:', name, arguments, 'code', action.compute_talon_script())
+                if self.recording_actions_in_primary_memory: self.record_action(action)
                 if should_record_in_file.get(): record_output_to_file(action.to_json())
                 if callback_manager.is_listening(): callback_manager.handle_action(action)
     
