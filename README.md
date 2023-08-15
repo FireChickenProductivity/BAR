@@ -16,5 +16,17 @@ bar history show: Show a command history including basic actions, command names,
 
 bar history hide: Hide the bar history. 
 
+# Registering Callback Functions
+
+The following action can be used to register a callback function that gets called when a basic action is performed with a corresponding BasicAction object:
+
+user.basic_action_recorder_register_callback_function_with_name(callback_function: Callable, name: str):
+
+BasicAction objects have get_name() and get_arguments() methods that return the name of the action and the arguments passed to it respectively.
+
+The following action can be used to unregister a callback function using the name it was registered with: 
+
+basic_action_recorder_unregister_callback_function_with_name(name: str)
+
 # Settings
 If user.basic_action_recorder_record_in_file is set to any integer other than 0, the basic action history is outputted to the record.txt file in the BAR Data directory. The setting is 0 by default. 
