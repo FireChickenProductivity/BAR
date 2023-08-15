@@ -45,13 +45,15 @@ class ActionRecorder:
         log('action recorded:', action.get_name(), action.get_arguments(), 'code', action.compute_talon_script())
     
     def record_basic_action(self, name, arguments):
-        if not self.temporarily_rejecting_actions:
-            if self.recording_actions_in_primary_memory or should_record_in_file.get() or callback_manager.is_listening():
-                action = BasicAction(name, arguments)
-                if self.recording_actions_in_primary_memory: self.record_action(action)
-                if should_record_in_file.get(): record_output_to_file(action.to_json())
-                if callback_manager.is_listening(): callback_manager.handle_action(action)
+        if not self.temporarily_rejecting_actions and self.should_record_when_not_temporarily_rejecting_actions():
+            action = BasicAction(name, arguments)
+            if self.recording_actions_in_primary_memory: self.record_action(action)
+            if should_record_in_file.get(): record_output_to_file(action.to_json())
+            if callback_manager.is_listening(): callback_manager.handle_action(action)
     
+    def should_record_when_not_temporarily_rejecting_actions(self):
+        return self.recording_actions_in_primary_memory or should_record_in_file.get() or callback_manager.is_listening()
+
     def stop_recording_actions_in_primary_memory(self):
         self.recording_actions_in_primary_memory = False
     
@@ -301,7 +303,7 @@ def start_recording():
     context.tags = ['user.' + RECORDING_TAG_NAME]
 
 def stop_recording_if_nothing_listening():
-    if not (recorder.is_accepting_actions() or history.is_recording_history() or should_record_in_file.get() or callback_manager.is_listening()):
+    if not (recorder.should_record_when_not_temporarily_rejecting_actions() or history.is_recording_history()):
         context.tags = []
 
 def start_recording_when_should_record_in_file(should_record_in_file):
