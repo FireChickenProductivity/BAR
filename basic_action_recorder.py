@@ -136,8 +136,25 @@ class TalonTimeSpecification:
     def __repr__(self) -> str:
         return self.__str__()
 
+class CallbackManager:
+    def __init__(self):
+        self.functions = {}
+    
+    def insert_callback_function_with_name(self, callback_function, name: str):
+        self.functions[name] = callback_function
+    
+    def remove_callback_function_with_name(self, name: str):
+        self.functions.pop(name, 'Function not found')
+    
+    def is_listening(self):
+        return len(self.functions) > 0
+    
+    def handle_action(self, action):
+        for function_name in self.functions: self.functions[function_name](action)
+
 recorder = ActionRecorder()
 history = ActionHistory()
+callback_manager = CallbackManager()
 RECORDING_TAG_NAME = 'basic_action_recorder_recording'
 module.tag(RECORDING_TAG_NAME)
 recording_context = Context()
