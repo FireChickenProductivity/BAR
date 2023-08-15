@@ -27,6 +27,8 @@ def set_up():
     PRIMARY_OUTPUT_PATH = os.path.join(OUTPUT_DIRECTORY, PRIMARY_OUTPUT_FILE)
     if not os.path.exists(OUTPUT_DIRECTORY):
         os.makedirs(OUTPUT_DIRECTORY)
+    if should_record_in_file.get():
+        start_recording()
 
 class ActionRecorder:
     def __init__(self):
