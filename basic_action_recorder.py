@@ -1,6 +1,7 @@
 from talon import Module, actions, Context, imgui, speech_system, app, settings
 from .action_records import BasicAction
 import os
+from typing import Callable
 
 module = Module()
 history_size = module.setting(
@@ -43,16 +44,14 @@ class ActionRecorder:
         self.actions.append(action)
     
     def record_basic_action(self, name, arguments):
-        action = None
         if not self.temporarily_rejecting_actions:
-            if self.recording_actions_in_primary_memory:
+            if self.recording_actions_in_primary_memory or should_record_in_file.get() or callback_manager.is_listening():
                 action = BasicAction(name, arguments)
-                self.record_action(action)
-                log('action recorded:', name, arguments, 'code', action.compute_talon_script())
-            if should_record_in_file.get():
-                if action is None:
-                    action = BasicAction(name, arguments)
-                record_output_to_file(action.to_json())
+                if self.recording_actions_in_primary_memory:
+                    self.record_action(action)
+                    log('action recorded:', name, arguments, 'code', action.compute_talon_script())
+                if should_record_in_file.get(): record_output_to_file(action.to_json())
+                if callback_manager.is_listening(): callback_manager.handle_action(action)
     
     def stop_recording_actions_in_primary_memory(self):
         self.recording_actions_in_primary_memory = False
@@ -288,12 +287,22 @@ class Actions:
     def basic_action_recorder_hide_history():
         '''Stops displaying the basic action recorder history of actions performed'''
         gui.hide()
+    
+    def basic_action_recorder_register_callback_function_with_name(callback_function: Callable, name: str):
+        '''Registers a callback function with specified name to receive basic actions performed'''
+        callback_manager.insert_callback_function_with_name(callback_function, name)
+        start_recording()
+    
+    def basic_action_recorder_unregister_callback_function_with_name(name: str):
+        '''Unregisters the specified callback function using the name it was registered with'''
+        callback_manager.remove_callback_function_with_name(name)
+        stop_recording_if_nothing_listening()
 
 def start_recording():
     context.tags = ['user.' + RECORDING_TAG_NAME]
 
 def stop_recording_if_nothing_listening():
-    if not (recorder.is_accepting_actions() or history.is_recording_history() or should_record_in_file.get()):
+    if not (recorder.is_accepting_actions() or history.is_recording_history() or should_record_in_file.get() or callback_manager.is_listening()):
         context.tags = []
 
 def start_recording_when_should_record_in_file(should_record_in_file):
