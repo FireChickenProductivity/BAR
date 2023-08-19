@@ -524,7 +524,9 @@ class TestFindProseMatchesForCommandGivenInsert(unittest.TestCase):
         self.assertEqual(actual_names, expected_names)
         self.assertEqual(actual_text_before, expected_text_before)
         self.assertEqual(actual_text_after, expected_text_after)
-        
+
+class TestMakeAbstractProseRepresentationsForCommandGivenInserts(unittest.TestCase):
+    pass
 
 def generate_test_insert_action():
     action = generate_insert_action('this is a test')
