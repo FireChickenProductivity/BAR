@@ -429,31 +429,46 @@ def compute_text_analyzer_for_prose_and_insert(prose: str, insert: InsertAction)
     analyzer.search_for_prose_in_separated_part(prose)
     return analyzer
 
+class CloseNotFoundWithPersistentSeparatorException(Exception):
+    pass
+
+class ProseMatch:
+    def __init__(self, analyzer: TextSeparationAnalyzer, name: str):
+        self.analyzer = analyzer
+        self.name = name
+
+def find_prose_match_for_command_given_insert_at_interval(words, insert, starting_index, prose_size):
+    prose = generate_prose_from_words(words, starting_index, prose_size)
+    analyzer = compute_text_analyzer_for_prose_and_insert(prose, insert)
+    if analyzer.is_prose_separator_consistent() and analyzer.has_found_prose():
+        command_name = generate_prose_command_command_name(words, starting_index, prose_size)
+        return ProseMatch(analyzer, command_name)
+    raise CloseNotFoundWithPersistentSeparatorException()
+
+def find_prose_matches_for_command_given_insert_at_starting_index(words, insert, starting_index, max_prose_size_to_consider):
+    matches = []
+    maximum_size = min(max_prose_size_to_consider, len(words) - starting_index + 1)
+    for prose_size in range(1, maximum_size):
+        try: matches.append(find_prose_match_for_command_given_insert_at_interval(words, insert, starting_index, prose_size))
+        except CloseNotFoundWithPersistentSeparatorException: break
+    return matches
+
 def find_prose_matches_for_command_given_insert(command_chain, insert, max_prose_size_to_consider):
     dictation: str = command_chain.get_name()
     words = dictation.split(' ')
     matches = []
-    for starting_index in range(len(words)):
-        maximum_size = min(max_prose_size_to_consider, len(words) - starting_index + 1)
-        for prose_size in range(1, maximum_size):
-            prose = generate_prose_from_words(words, starting_index, prose_size)
-            analyzer = compute_text_analyzer_for_prose_and_insert(prose, insert)
-            if analyzer.is_prose_separator_consistent() and analyzer.has_found_prose():
-                command_name = generate_prose_command_command_name(words, starting_index, prose_size)
-                matches.append((analyzer, command_name))
-            else:
-                break
+    for starting_index in range(len(words)): matches.extend(find_prose_matches_for_command_given_insert_at_starting_index(words, insert, starting_index, max_prose_size_to_consider))
     return matches
 
 def make_abstract_prose_representations_for_command_given_inserts(command_chain, inserts, max_prose_size_to_consider):
     abstract_representations = []
     for insert in inserts:
         prose_matches = find_prose_matches_for_command_given_insert(command_chain, insert, max_prose_size_to_consider)
-        for analyzer, command_name in prose_matches:
+        for match in prose_matches:
             try:
-                abstract_representation = make_abstract_representation_for_prose_command(command_chain, analyzer, insert.index)
+                abstract_representation = make_abstract_representation_for_prose_command(command_chain, match.analyzer, insert.index)
                 if len(abstract_representation.get_actions()) > 1:
-                    abstract_representation.set_name(command_name)
+                    abstract_representation.set_name(match.command_name)
                     abstract_representations.append(abstract_representation)
             except InvalidCaseException: pass
     return abstract_representations
