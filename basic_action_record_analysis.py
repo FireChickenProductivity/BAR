@@ -468,7 +468,7 @@ def make_abstract_prose_representations_for_command_given_inserts(command_chain,
             try:
                 abstract_representation = make_abstract_representation_for_prose_command(command_chain, match.analyzer, insert.index)
                 if len(abstract_representation.get_actions()) > 1:
-                    abstract_representation.set_name(match.command_name)
+                    abstract_representation.set_name(match.name)
                     abstract_representations.append(abstract_representation)
             except InvalidCaseException: pass
     return abstract_representations
