@@ -424,6 +424,11 @@ def generate_prose_from_words(words, starting_index: int, prose_size: int) -> st
     prose = ' '.join(words[starting_index:starting_index + prose_size])
     return prose
 
+def compute_text_analyzer_for_prose_and_insert(prose: str, insert: InsertAction):
+    analyzer = TextSeparationAnalyzer(insert.text)
+    analyzer.search_for_prose_in_separated_part(prose)
+    return analyzer
+
 def find_prose_matches_for_command_given_insert(command_chain, insert, max_prose_size_to_consider):
     dictation: str = command_chain.get_name()
     words = dictation.split(' ')
@@ -432,8 +437,7 @@ def find_prose_matches_for_command_given_insert(command_chain, insert, max_prose
         maximum_size = min(max_prose_size_to_consider, len(words) - starting_index + 1)
         for prose_size in range(1, maximum_size):
             prose = generate_prose_from_words(words, starting_index, prose_size)
-            analyzer = TextSeparationAnalyzer(insert.text)
-            analyzer.search_for_prose_in_separated_part(prose)
+            analyzer = compute_text_analyzer_for_prose_and_insert(prose, insert)
             if analyzer.is_prose_separator_consistent() and analyzer.has_found_prose():
                 command_name = generate_prose_command_command_name(words, starting_index, prose_size)
                 matches.append((analyzer, command_name))
