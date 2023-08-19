@@ -429,7 +429,7 @@ def compute_text_analyzer_for_prose_and_insert(prose: str, insert: InsertAction)
     analyzer.search_for_prose_in_separated_part(prose)
     return analyzer
 
-class CloseNotFoundWithPersistentSeparatorException(Exception):
+class ProseNotFoundWithPersistentSeparatorException(Exception):
     pass
 
 class ProseMatch:
@@ -443,14 +443,14 @@ def find_prose_match_for_command_given_insert_at_interval(words, insert, startin
     if analyzer.is_prose_separator_consistent() and analyzer.has_found_prose():
         command_name = generate_prose_command_command_name(words, starting_index, prose_size)
         return ProseMatch(analyzer, command_name)
-    raise CloseNotFoundWithPersistentSeparatorException()
+    raise ProseNotFoundWithPersistentSeparatorException()
 
 def find_prose_matches_for_command_given_insert_at_starting_index(words, insert, starting_index, max_prose_size_to_consider):
     matches = []
     maximum_size = min(max_prose_size_to_consider, len(words) - starting_index + 1)
     for prose_size in range(1, maximum_size):
         try: matches.append(find_prose_match_for_command_given_insert_at_interval(words, insert, starting_index, prose_size))
-        except CloseNotFoundWithPersistentSeparatorException: break
+        except ProseNotFoundWithPersistentSeparatorException: break
     return matches
 
 def find_prose_matches_for_command_given_insert(command_chain, insert, max_prose_size_to_consider):
