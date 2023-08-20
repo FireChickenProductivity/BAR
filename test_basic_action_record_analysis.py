@@ -545,6 +545,21 @@ class TestMakeAbstractProseRepresentationsForCommandGivenInserts(unittest.TestCa
         expected = []
         actual = make_abstract_prose_representations_for_command_given_inserts(single_prose_action_only_command_chain, [InsertAction('test', 0)], TEST_MAX_PROSE_SIZE_TO_CONSIDER)
         self.assertEqual(actual, expected)
+    
+    def test_handles_two_inserts(self):
+        two_inserts_command_chain = CommandChain('this is a test', [generate_insert_action('this is'), generate_press_a_action(), generate_insert_action('a test')], 0, 1)
+        expected_number_of_commands = 6
+        first_expected = CommandChain('<user.text> is a test', [generate_abstract_prose_action('lower', ''), generate_insert_action(' is'), generate_press_a_action(), generate_insert_action('a test')], 0, 1)
+        second_expected = CommandChain('<user.text> a test', [generate_abstract_prose_action('lower', ' '), generate_press_a_action(), generate_insert_action('a test')], 0, 1)
+        third_expected = CommandChain('this <user.text> a test', [generate_insert_action('th'), generate_abstract_prose_action('lower', ''), generate_insert_action(' is'), generate_press_a_action(), generate_insert_action('a test')], 0, 1)
+        #This third one is somewhat unexpected behavior, will debug later
+        fourth_expected = CommandChain('this is <user.text> test', [generate_insert_action('this is'), generate_press_a_action(), generate_abstract_prose_action('lower', ''), generate_insert_action(' test')], 0, 1)
+        fifth_expected = CommandChain('this is <user.text>', [generate_insert_action('this is'), generate_press_a_action(), generate_abstract_prose_action('lower', ' ')], 0, 1)
+        sixth_expected = CommandChain('this is a <user.text>', [generate_insert_action('this is'), generate_press_a_action(), generate_insert_action('a '), generate_abstract_prose_action('lower', '')], 0, 1)
+        actual = make_abstract_prose_representations_for_command_given_inserts(two_inserts_command_chain, [InsertAction('this is', 0), InsertAction('a test', 2)], TEST_MAX_PROSE_SIZE_TO_CONSIDER)
+        self.assertEqual(len(actual), expected_number_of_commands)
+        expected_commands = [first_expected, second_expected, third_expected, fourth_expected, fifth_expected, sixth_expected]
+        for index, expected in enumerate(expected_commands): assert_command_chains_match(self, actual[index], expected)
 
 
 def generate_test_insert_action():
