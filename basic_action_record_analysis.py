@@ -468,12 +468,15 @@ def find_prose_matches_for_command_given_insert(command_chain, insert, max_prose
     for starting_index in range(len(words)): matches.extend(find_prose_matches_for_command_given_insert_at_starting_index(words, insert, starting_index, max_prose_size_to_consider))
     return matches
 
+def is_acceptable_abstract_representation(representation):
+    return len(representation.get_actions()) > 1
+
 def make_abstract_prose_representations_for_command_given_insert(command_chain, insert, max_prose_size_to_consider):
     abstract_representations = []
     prose_matches = find_prose_matches_for_command_given_insert(command_chain, insert, max_prose_size_to_consider)
     for match in prose_matches:
         abstract_representation = make_abstract_representation_for_prose_command(command_chain, match, insert.index)
-        if len(abstract_representation.get_actions()) > 1: abstract_representations.append(abstract_representation)
+        if is_acceptable_abstract_representation(abstract_representation): abstract_representations.append(abstract_representation)
     return abstract_representations
 
 def make_abstract_prose_representations_for_command_given_inserts(command_chain, inserts, max_prose_size_to_consider):
