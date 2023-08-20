@@ -536,8 +536,8 @@ class TestMakeAbstractProseRepresentationsForCommandGivenInserts(unittest.TestCa
         self.assertEqual(actual, expected)
     
     def test_handles_one_insert(self):
-        one_insert_command_chain = CommandChain('say test', [generate_insert_action('test'), generate_press_a_action()], 0, 1)
-        expected_command_chain = CommandChain('say <user.text>', [generate_abstract_prose_action('lower', ''), generate_press_a_action()], 0, 1)
+        one_insert_command_chain = generate_single_insert_command_chain()
+        expected_command_chain = generate_single_insert_command_chain_abstract_prose_representation()
         expected_number_of_commands = 1
         actual = make_abstract_prose_representations_for_command_given_inserts(one_insert_command_chain, [InsertAction('test', 0)], TEST_MAX_PROSE_SIZE_TO_CONSIDER)
         self.assertEqual(len(actual), expected_number_of_commands)
@@ -570,10 +570,26 @@ class MakeAbstractProseRepresentationsForCommand(unittest.TestCase):
         expected = []
         actual = make_abstract_prose_representations_for_command(no_insert_command_chain, TEST_MAX_PROSE_SIZE_TO_CONSIDER)
         self.assertEqual(actual, expected)
+    
+    def test_handles_one_insert(self):
+        one_insert_command_chain = generate_single_insert_command_chain()
+        expected_command_chain = generate_single_insert_command_chain_abstract_prose_representation()
+        expected_number_of_commands = 1
+        actual = make_abstract_prose_representations_for_command(one_insert_command_chain, TEST_MAX_PROSE_SIZE_TO_CONSIDER)
+        self.assertEqual(len(actual), expected_number_of_commands)
+        assert_command_chains_match(self, actual[0], expected_command_chain)
 
 def generate_no_insert_command_chain():
     no_insert_command_chain = CommandChain('this is a test ctrl-a ctrl-c', generate_copy_all_action_list(), 0, 1)
     return no_insert_command_chain
+
+def generate_single_insert_command_chain():
+    one_insert_command_chain = CommandChain('say test', [generate_insert_action('test'), generate_press_a_action()], 0, 1)
+    return one_insert_command_chain
+
+def generate_single_insert_command_chain_abstract_prose_representation():
+    one_insert_abstract_prose_representation = CommandChain('say <user.text>', [generate_abstract_prose_action('lower', ''), generate_press_a_action()], 0, 1)
+    return one_insert_abstract_prose_representation
 
 
 def generate_test_insert_action():
