@@ -552,16 +552,9 @@ class TestMakeAbstractProseRepresentationsForCommandGivenInserts(unittest.TestCa
     def test_handles_two_inserts(self):
         two_inserts_command_chain = CommandChain('this is a test', [generate_insert_action('this is'), generate_press_a_action(), generate_insert_action('a test')], 0, 1)
         expected_number_of_commands = 6
-        first_expected = CommandChain('<user.text> is a test', [generate_abstract_prose_action('lower', ''), generate_insert_action(' is'), generate_press_a_action(), generate_insert_action('a test')], 0, 1)
-        second_expected = CommandChain('<user.text> a test', [generate_abstract_prose_action('lower', ' '), generate_press_a_action(), generate_insert_action('a test')], 0, 1)
-        third_expected = CommandChain('this <user.text> a test', [generate_insert_action('th'), generate_abstract_prose_action('lower', ''), generate_insert_action(' is'), generate_press_a_action(), generate_insert_action('a test')], 0, 1)
-        #This third one technically behaves as it should, but I might want to improve this functionality later
-        fourth_expected = CommandChain('this is <user.text> test', [generate_insert_action('this is'), generate_press_a_action(), generate_abstract_prose_action('lower', ''), generate_insert_action(' test')], 0, 1)
-        fifth_expected = CommandChain('this is <user.text>', [generate_insert_action('this is'), generate_press_a_action(), generate_abstract_prose_action('lower', ' ')], 0, 1)
-        sixth_expected = CommandChain('this is a <user.text>', [generate_insert_action('this is'), generate_press_a_action(), generate_insert_action('a '), generate_abstract_prose_action('lower', '')], 0, 1)
         actual = make_abstract_prose_representations_for_command_given_inserts(two_inserts_command_chain, [InsertAction('this is', 0), InsertAction('a test', 2)], TEST_MAX_PROSE_SIZE_TO_CONSIDER)
         self.assertEqual(len(actual), expected_number_of_commands)
-        expected_commands = [first_expected, second_expected, third_expected, fourth_expected, fifth_expected, sixth_expected]
+        expected_commands = generate_two_inserts_command_chain_abstract_prose_representations()
         for index, expected in enumerate(expected_commands): assert_command_chains_match(self, actual[index], expected)
 
 class MakeAbstractProseRepresentationsForCommand(unittest.TestCase):
@@ -579,6 +572,14 @@ class MakeAbstractProseRepresentationsForCommand(unittest.TestCase):
         self.assertEqual(len(actual), expected_number_of_commands)
         assert_command_chains_match(self, actual[0], expected_command_chain)
 
+    def test_handles_two_inserts(self):
+        two_inserts_command_chain = generate_two_inserts_command_chain()
+        expected_number_of_commands = 6
+        actual = make_abstract_prose_representations_for_command(two_inserts_command_chain, TEST_MAX_PROSE_SIZE_TO_CONSIDER)
+        self.assertEqual(len(actual), expected_number_of_commands)
+        expected_commands = generate_two_inserts_command_chain_abstract_prose_representations()
+        for index, expected in enumerate(expected_commands): assert_command_chains_match(self, actual[index], expected)
+
 def generate_no_insert_command_chain():
     no_insert_command_chain = CommandChain('this is a test ctrl-a ctrl-c', generate_copy_all_action_list(), 0, 1)
     return no_insert_command_chain
@@ -591,6 +592,20 @@ def generate_single_insert_command_chain_abstract_prose_representation():
     one_insert_abstract_prose_representation = CommandChain('say <user.text>', [generate_abstract_prose_action('lower', ''), generate_press_a_action()], 0, 1)
     return one_insert_abstract_prose_representation
 
+def generate_two_inserts_command_chain():
+    two_inserts_command_chain = CommandChain('this is a test', [generate_insert_action('this is'), generate_press_a_action(), generate_insert_action('a test')], 0, 1)
+    return two_inserts_command_chain
+
+def generate_two_inserts_command_chain_abstract_prose_representations():
+    first_expected = CommandChain('<user.text> is a test', [generate_abstract_prose_action('lower', ''), generate_insert_action(' is'), generate_press_a_action(), generate_insert_action('a test')], 0, 1)
+    second_expected = CommandChain('<user.text> a test', [generate_abstract_prose_action('lower', ' '), generate_press_a_action(), generate_insert_action('a test')], 0, 1)
+    third_expected = CommandChain('this <user.text> a test', [generate_insert_action('th'), generate_abstract_prose_action('lower', ''), generate_insert_action(' is'), generate_press_a_action(), generate_insert_action('a test')], 0, 1)
+    #This third one technically behaves as it should, but I might want to improve this functionality later
+    fourth_expected = CommandChain('this is <user.text> test', [generate_insert_action('this is'), generate_press_a_action(), generate_abstract_prose_action('lower', ''), generate_insert_action(' test')], 0, 1)
+    fifth_expected = CommandChain('this is <user.text>', [generate_insert_action('this is'), generate_press_a_action(), generate_abstract_prose_action('lower', ' ')], 0, 1)
+    sixth_expected = CommandChain('this is a <user.text>', [generate_insert_action('this is'), generate_press_a_action(), generate_insert_action('a '), generate_abstract_prose_action('lower', '')], 0, 1)
+    representations = [first_expected, second_expected, third_expected, fourth_expected, fifth_expected, sixth_expected]
+    return representations
 
 def generate_test_insert_action():
     action = generate_insert_action('this is a test')
