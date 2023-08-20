@@ -468,13 +468,19 @@ def find_prose_matches_for_command_given_insert(command_chain, insert, max_prose
     for starting_index in range(len(words)): matches.extend(find_prose_matches_for_command_given_insert_at_starting_index(words, insert, starting_index, max_prose_size_to_consider))
     return matches
 
+def make_abstract_prose_representations_for_command_given_insert(command_chain, insert, max_prose_size_to_consider):
+    abstract_representations = []
+    prose_matches = find_prose_matches_for_command_given_insert(command_chain, insert, max_prose_size_to_consider)
+    for match in prose_matches:
+        abstract_representation = make_abstract_representation_for_prose_command(command_chain, match, insert.index)
+        if len(abstract_representation.get_actions()) > 1: abstract_representations.append(abstract_representation)
+    return abstract_representations
+
 def make_abstract_prose_representations_for_command_given_inserts(command_chain, inserts, max_prose_size_to_consider):
     abstract_representations = []
-    for insert in inserts:
-        prose_matches = find_prose_matches_for_command_given_insert(command_chain, insert, max_prose_size_to_consider)
-        for match in prose_matches:
-            abstract_representation = make_abstract_representation_for_prose_command(command_chain, match, insert.index)
-            if len(abstract_representation.get_actions()) > 1: abstract_representations.append(abstract_representation)
+    for insert in inserts: 
+        representations_given_insert = make_abstract_prose_representations_for_command_given_insert(command_chain, insert, max_prose_size_to_consider)
+        abstract_representations.extend(representations_given_insert)
     return abstract_representations
 
 def make_abstract_prose_representations_for_command(command_chain, max_prose_size_to_consider = 10):
