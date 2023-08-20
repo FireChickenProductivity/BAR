@@ -528,9 +528,17 @@ class TestFindProseMatchesForCommandGivenInsert(unittest.TestCase):
 class TestMakeAbstractProseRepresentationsForCommandGivenInserts(unittest.TestCase):
     def test_handles_no_inserts(self):
         no_insert_command_chain = CommandChain('this is a test ctrl-a ctrl-c', generate_copy_all_action_list(), 0, 1)
-        expected = [0]
-        actual = make_abstract_prose_representations_for_command_given_inserts(no_insert_command_chain, [], 10)
+        expected = []
+        actual = make_abstract_prose_representations_for_command_given_inserts(no_insert_command_chain, [], TEST_MAX_PROSE_SIZE_TO_CONSIDER)
         self.assertEqual(actual, expected)
+    
+    def test_handles_one_insert(self):
+        one_insert_command_chain = CommandChain('say test', [generate_insert_action('test'), generate_press_a_action()], 0, 1)
+        expected_command_chain = CommandChain('say <user.text>', [generate_abstract_prose_action('lower', ''), generate_press_a_action()], 0, 1)
+        actual = make_abstract_prose_representations_for_command_given_inserts(one_insert_command_chain, [InsertAction('test', 0)], TEST_MAX_PROSE_SIZE_TO_CONSIDER)
+        expected_number_of_commands = 1
+        self.assertEqual(len(actual), expected_number_of_commands)
+        assert_command_chains_match(self, actual[0], expected_command_chain)
 
 
 def generate_test_insert_action():
