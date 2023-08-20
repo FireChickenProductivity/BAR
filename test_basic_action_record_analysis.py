@@ -555,7 +555,7 @@ class TestMakeAbstractProseRepresentationsForCommandGivenInserts(unittest.TestCa
         first_expected = CommandChain('<user.text> is a test', [generate_abstract_prose_action('lower', ''), generate_insert_action(' is'), generate_press_a_action(), generate_insert_action('a test')], 0, 1)
         second_expected = CommandChain('<user.text> a test', [generate_abstract_prose_action('lower', ' '), generate_press_a_action(), generate_insert_action('a test')], 0, 1)
         third_expected = CommandChain('this <user.text> a test', [generate_insert_action('th'), generate_abstract_prose_action('lower', ''), generate_insert_action(' is'), generate_press_a_action(), generate_insert_action('a test')], 0, 1)
-        #This third one is somewhat unexpected behavior, will debug later
+        #This third one technically behaves as it should, but I might want to improve this functionality later
         fourth_expected = CommandChain('this is <user.text> test', [generate_insert_action('this is'), generate_press_a_action(), generate_abstract_prose_action('lower', ''), generate_insert_action(' test')], 0, 1)
         fifth_expected = CommandChain('this is <user.text>', [generate_insert_action('this is'), generate_press_a_action(), generate_abstract_prose_action('lower', ' ')], 0, 1)
         sixth_expected = CommandChain('this is a <user.text>', [generate_insert_action('this is'), generate_press_a_action(), generate_insert_action('a '), generate_abstract_prose_action('lower', '')], 0, 1)
