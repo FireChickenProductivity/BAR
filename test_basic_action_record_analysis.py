@@ -530,7 +530,7 @@ class TestFindProseMatchesForCommandGivenInsert(unittest.TestCase):
 
 class TestMakeAbstractProseRepresentationsForCommandGivenInserts(unittest.TestCase):
     def test_handles_no_inserts(self):
-        no_insert_command_chain = CommandChain('this is a test ctrl-a ctrl-c', generate_copy_all_action_list(), 0, 1)
+        no_insert_command_chain = generate_no_insert_command_chain()
         expected = []
         actual = make_abstract_prose_representations_for_command_given_inserts(no_insert_command_chain, [], TEST_MAX_PROSE_SIZE_TO_CONSIDER)
         self.assertEqual(actual, expected)
@@ -563,6 +563,17 @@ class TestMakeAbstractProseRepresentationsForCommandGivenInserts(unittest.TestCa
         self.assertEqual(len(actual), expected_number_of_commands)
         expected_commands = [first_expected, second_expected, third_expected, fourth_expected, fifth_expected, sixth_expected]
         for index, expected in enumerate(expected_commands): assert_command_chains_match(self, actual[index], expected)
+
+class MakeAbstractProseRepresentationsForCommand(unittest.TestCase):
+    def test_handles_no_inserts(self):
+        no_insert_command_chain = generate_no_insert_command_chain()
+        expected = []
+        actual = make_abstract_prose_representations_for_command(no_insert_command_chain, TEST_MAX_PROSE_SIZE_TO_CONSIDER)
+        self.assertEqual(actual, expected)
+
+def generate_no_insert_command_chain():
+    no_insert_command_chain = CommandChain('this is a test ctrl-a ctrl-c', generate_copy_all_action_list(), 0, 1)
+    return no_insert_command_chain
 
 
 def generate_test_insert_action():
