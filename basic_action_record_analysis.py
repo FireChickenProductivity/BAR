@@ -372,6 +372,13 @@ def compute_case_string(text: str) -> str:
     elif text[0].isupper() and text[1:].islower(): return 'capitalized'
     else: raise InvalidCaseException()
 
+def has_valid_case(analyzer: TextSeparationAnalyzer) -> bool:
+    try:
+        for word in analyzer.compute_prose_portion_of_text(): compute_case_string(word)
+        return True
+    except:
+        return False
+
 def compute_simplified_case_strings_list(case_strings: List) -> List:
     simplified_case_strings = []
     new_case_found = False
@@ -435,23 +442,23 @@ def compute_text_analyzer_for_prose_and_insert(prose: str, insert: InsertAction)
     analyzer.search_for_prose_in_separated_part(prose)
     return analyzer
 
-class ProseNotFoundWithPersistentSeparatorException(Exception):
+class ValidProseNotFoundException(Exception):
     pass
 
 def find_prose_match_for_command_given_insert_at_interval(words, insert, starting_index, prose_size):
     prose = generate_prose_from_words(words, starting_index, prose_size)
     analyzer = compute_text_analyzer_for_prose_and_insert(prose, insert)
-    if analyzer.is_prose_separator_consistent() and analyzer.has_found_prose():
+    if analyzer.is_prose_separator_consistent() and analyzer.has_found_prose() and has_valid_case(analyzer):
         command_name = generate_prose_command_command_name(words, starting_index, prose_size)
         return ProseMatch(analyzer, command_name)
-    raise ProseNotFoundWithPersistentSeparatorException()
+    raise ValidProseNotFoundException()
 
 def find_prose_matches_for_command_given_insert_at_starting_index(words, insert, starting_index, max_prose_size_to_consider):
     matches = []
     maximum_size = min(max_prose_size_to_consider, len(words) - starting_index + 1)
     for prose_size in range(1, maximum_size):
         try: matches.append(find_prose_match_for_command_given_insert_at_interval(words, insert, starting_index, prose_size))
-        except ProseNotFoundWithPersistentSeparatorException: break
+        except ValidProseNotFoundException: break
     return matches
 
 def find_prose_matches_for_command_given_insert(command_chain, insert, max_prose_size_to_consider):
@@ -466,10 +473,8 @@ def make_abstract_prose_representations_for_command_given_inserts(command_chain,
     for insert in inserts:
         prose_matches = find_prose_matches_for_command_given_insert(command_chain, insert, max_prose_size_to_consider)
         for match in prose_matches:
-            try:
-                abstract_representation = make_abstract_representation_for_prose_command(command_chain, match, insert.index)
-                if len(abstract_representation.get_actions()) > 1: abstract_representations.append(abstract_representation)
-            except InvalidCaseException: pass
+            abstract_representation = make_abstract_representation_for_prose_command(command_chain, match, insert.index)
+            if len(abstract_representation.get_actions()) > 1: abstract_representations.append(abstract_representation)
     return abstract_representations
 
 def make_abstract_prose_representations_for_command(command_chain, max_prose_size_to_consider = 10):
