@@ -392,7 +392,13 @@ def compute_case_string_for_prose(analyzer: TextSeparationAnalyzer):
     case_string = ' '.join(simplified_case_strings)
     return case_string
 
-def make_abstract_representation_for_prose_command(command_chain, analyzer: TextSeparationAnalyzer, insert_to_modify_index: int):
+class ProseMatch:
+    def __init__(self, analyzer: TextSeparationAnalyzer, name: str):
+        self.analyzer = analyzer
+        self.name = name
+
+def make_abstract_representation_for_prose_command(command_chain, match: ProseMatch, insert_to_modify_index: int):
+    analyzer = match.analyzer
     actions = command_chain.get_actions()
     new_actions = actions[:insert_to_modify_index]
     text_before = analyzer.compute_text_before_prose()
@@ -402,7 +408,7 @@ def make_abstract_representation_for_prose_command(command_chain, analyzer: Text
     text_after = analyzer.compute_text_after_prose()
     if text_after: new_actions.append(BasicAction('insert', [text_after]))
     if insert_to_modify_index + 1 < len(actions): new_actions.extend(actions[insert_to_modify_index + 1:])
-    new_command = compute_command_chain_copy_with_new_name_and_actions(command_chain, command_chain.get_name(), new_actions)
+    new_command = compute_command_chain_copy_with_new_name_and_actions(command_chain, match.name, new_actions)
     return new_command
 
 class InsertAction:
@@ -431,11 +437,6 @@ def compute_text_analyzer_for_prose_and_insert(prose: str, insert: InsertAction)
 
 class ProseNotFoundWithPersistentSeparatorException(Exception):
     pass
-
-class ProseMatch:
-    def __init__(self, analyzer: TextSeparationAnalyzer, name: str):
-        self.analyzer = analyzer
-        self.name = name
 
 def find_prose_match_for_command_given_insert_at_interval(words, insert, starting_index, prose_size):
     prose = generate_prose_from_words(words, starting_index, prose_size)
@@ -466,10 +467,8 @@ def make_abstract_prose_representations_for_command_given_inserts(command_chain,
         prose_matches = find_prose_matches_for_command_given_insert(command_chain, insert, max_prose_size_to_consider)
         for match in prose_matches:
             try:
-                abstract_representation = make_abstract_representation_for_prose_command(command_chain, match.analyzer, insert.index)
-                if len(abstract_representation.get_actions()) > 1:
-                    abstract_representation.set_name(match.name)
-                    abstract_representations.append(abstract_representation)
+                abstract_representation = make_abstract_representation_for_prose_command(command_chain, match, insert.index)
+                if len(abstract_representation.get_actions()) > 1: abstract_representations.append(abstract_representation)
             except InvalidCaseException: pass
     return abstract_representations
 

@@ -444,8 +444,11 @@ class TestMakeAbstractRepresentationForProseCommand(unittest.TestCase):
         text = command_chain.get_actions()[insert_to_modify_index].get_arguments()[0]
         analyzer = TextSeparationAnalyzer(text)
         analyzer.search_for_prose_in_separated_part(prose)
-        actual = make_abstract_representation_for_prose_command(command_chain, analyzer, insert_to_modify_index)
-        assert_command_chains_match(self, actual, expected)
+        new_name = 'name'
+        match = ProseMatch(analyzer, new_name)
+        actual = make_abstract_representation_for_prose_command(command_chain, match, insert_to_modify_index)
+        expected_with_new_name = compute_command_chain_copy_with_new_name_and_actions(expected, new_name, expected.get_actions())
+        assert_command_chains_match(self, actual, expected_with_new_name)
 
 class TestObtainInsertsFromCommandChain(unittest.TestCase):
     def test_handles_empty_command_chain(self):
@@ -570,6 +573,10 @@ def generate_abstract_prose_action(case_string: str, first_prose_separator: str)
     prose_argument = TalonCapture('user.text', 1)
     action = BasicAction('user.fire_chicken_auto_generated_command_action_insert_formatted_text', [prose_argument, case_string, first_prose_separator])
     return action
+
+def generate_command_chain_with_name_and_actions(name, actions):
+    result = CommandChain(name, actions, 0, 1)
+    return result
 
 def generate_command_chain_with_actions(actions):
     result = CommandChain('name', actions, 0, 1)
