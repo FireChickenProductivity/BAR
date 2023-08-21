@@ -32,4 +32,4 @@ basic_action_recorder_unregister_callback_function_with_name(name: str)
 If user.basic_action_recorder_record_in_file is set to any integer other than 0, the basic action history is outputted to the record.txt file in the BAR Data directory. The setting is 0 by default. 
 
 # Command Recommendation Generation
-The basic_action_record_analysis.py program can be used to output recommended voice commands to generate to improve productivity based on the previously mentioned record.txt. The program is currently very simplistic and a work in progress. Recommendations get generated in the recommendations.txt file in the BAR Data directory. 
+The basic_action_record_analysis.py program can be used to output recommended voice commands to generate to improve productivity based on the previously mentioned record.txt. The program is currently very simplistic and a work in progress. Recommendations get generated in the BAR Data directory in files named "recommendations (time of generation here).txt". 

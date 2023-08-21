@@ -1,4 +1,5 @@
 import math
+import datetime
 from pathlib import PurePath
 from typing import List
 
@@ -12,7 +13,8 @@ DATA_FOLDER = 'BAR Data'
 EXPECTED_PARENT = 'user'
 EXPECTED_GRANDPARENT = 'talon'
 INPUT_FILENAME = 'record.txt'
-OUTPUT_FILENAME = 'recommendations.txt'
+OUTPUT_FILENAME_PREFIX = 'recommendations '
+OUTPUT_FILE_EXTENSION = '.txt'
 COMMANDS_TO_IGNORE_FILENAME = 'commands_to_ignore.txt'
 
 class PotentialCommandInformation:
@@ -627,8 +629,14 @@ def write_command_to_file(file, command):
     for action in command.get_actions(): file.write('\t' + action.compute_talon_script() + '\n')
     file.write('\n\n')
 
+def generate_output_filename(output_directory):
+    timestamp = datetime.datetime.now()
+    formatted_timestamp = str(timestamp).replace('.', ',').replace(':', '-')
+    output_path = os.path.join(output_directory, OUTPUT_FILENAME_PREFIX + formatted_timestamp + OUTPUT_FILE_EXTENSION)
+    return output_path
+
 def output_recommendations(recommended_commands, output_directory):
-    output_path = os.path.join(output_directory, OUTPUT_FILENAME)
+    output_path = generate_output_filename(output_directory)
     with open(output_path, 'w') as file:
         for command in recommended_commands: write_command_to_file(file, command)
 
