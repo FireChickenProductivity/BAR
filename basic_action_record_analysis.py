@@ -583,9 +583,6 @@ def compute_data_directory():
         raise ProgramDirectoryInvalidException('The program must be stored in the talon user directory!')
     return os.path.join(parent, DATA_FOLDER)
 
-def compute_target_path(output_directory):
-    return os.path.join(output_directory, INPUT_FILENAME)
-
 def create_file_if_nonexistent(path):
     if not os.path.exists(path):
         with open(path, 'w') as file:
@@ -619,10 +616,9 @@ def compute_record_without_stuff_to_ignore(directory, record):
     filtered_record = [command for command in record if not commands_to_ignore.contains_command_actions(command)]
     return filtered_record
 
-def obtain_file_record(directory):
-    target_path = compute_target_path(directory)
-    record = read_file_record(target_path)
-    filtered_record = compute_record_without_stuff_to_ignore(directory, record)
+def obtain_file_record(data_directory, input_path):
+    record = read_file_record(input_path)
+    filtered_record = compute_record_without_stuff_to_ignore(data_directory, record)
     return filtered_record
 
 def write_command_to_file(file, command):
@@ -647,12 +643,12 @@ def compute_recommendations_from_record(record, max_command_chain_considered = 1
     sorted_recommended_commands = sorted(recommended_commands, key = lambda command: command.get_number_of_times_used(), reverse = True)
     return sorted_recommended_commands
 
-def generate_recommendations(directory):
-    record = obtain_file_record(directory)
+def generate_recommendations(data_directory, input_path):
+    record = obtain_file_record(data_directory, input_path)
     print('finished reading record')
     recommendations = compute_recommendations_from_record(record, 20, verbose = True)
     print('outputting recommendations')
-    output_recommendations(recommendations, directory)
+    output_recommendations(recommendations, data_directory)
     print('completed')
 
 def get_file_input_path_from_user() -> str:
@@ -666,11 +662,10 @@ def get_file_input_path_from_user() -> str:
             print('Please input a valid path!')
     return path
 
-
 def main():
-    directory = compute_data_directory()
+    data_directory = compute_data_directory()
     input_path = get_file_input_path_from_user()
-    generate_recommendations(directory)
+    generate_recommendations(data_directory, input_path)
 
 if __name__ == '__main__':
     main()
