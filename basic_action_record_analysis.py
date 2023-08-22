@@ -494,7 +494,7 @@ def make_abstract_prose_representations_for_command(command_chain, max_prose_siz
     else: return make_abstract_prose_representations_for_command_given_inserts(command_chain, inserts, max_prose_size_to_consider)
 
 def basic_command_filter(command: PotentialCommandInformation):
-    return command.get_average_words_dictated() > 1 and command.get_number_of_times_used() > 1 and \
+    return command.get_average_words_dictated() >= 2 and command.get_number_of_times_used() > 1 and \
             (not command.is_abstract() or command.get_number_of_instantiations() > 2) and \
             (command.get_number_of_actions()/command.get_average_words_dictated() < 2 or \
             command.get_number_of_actions()*math.sqrt(command.get_number_of_times_used()) > command.get_average_words_dictated())
