@@ -26,12 +26,16 @@ primary_output_path = None
 def set_up():
     global OUTPUT_DIRECTORY, primary_output_path
     OUTPUT_DIRECTORY = os.path.join(actions.path.talon_user(), 'BAR Data')
-    record_filename = PRIMARY_OUTPUT_FILE_NAME + record_file_name_postfix + PRIMARY_OUTPUT_FILE_EXTENSION
-    primary_output_path = os.path.join(OUTPUT_DIRECTORY, record_filename)
+    update_record_filename('')
     if not os.path.exists(OUTPUT_DIRECTORY):
         os.makedirs(OUTPUT_DIRECTORY)
     if should_record_in_file.get():
         start_recording()
+    
+def update_record_filename(postfix: str):
+    global primary_output_path
+    record_filename = PRIMARY_OUTPUT_FILE_NAME + postfix + PRIMARY_OUTPUT_FILE_EXTENSION
+    primary_output_path = os.path.join(OUTPUT_DIRECTORY, record_filename)
 
 class ActionRecorder:
     def __init__(self):
