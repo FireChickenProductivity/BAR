@@ -28,14 +28,26 @@ def set_up():
     OUTPUT_DIRECTORY = os.path.join(actions.path.talon_user(), 'BAR Data')
     if not os.path.exists(OUTPUT_DIRECTORY):
         os.makedirs(OUTPUT_DIRECTORY)
-    update_record_filename('')
+    update_record_file_name('')
     if should_record_in_file.get():
         start_recording()
     
-def update_record_filename(postfix: str):
+def update_record_file_name(postfix: str):
     global primary_output_path
     record_filename = PRIMARY_OUTPUT_FILE_NAME + postfix + PRIMARY_OUTPUT_FILE_EXTENSION
     primary_output_path = os.path.join(OUTPUT_DIRECTORY, record_filename)
+
+def compute_most_recently_updated_record_file_name(directory):
+    files_in_directory = os.listdir(directory)
+    record_file_names_in_directory = filter_for_record_file_names(files_in_directory)
+    name = compute_most_recently_updated_file_name_given_names_and_directory(record_file_names_in_directory, directory)
+    return name
+
+def filter_for_record_file_names(file_names):
+    pass
+
+def compute_most_recently_updated_file_name_given_names_and_directory(names, directory):
+    pass
 
 class ActionRecorder:
     def __init__(self):
@@ -313,7 +325,7 @@ class Actions:
             recording the basic action history is enabled'''
         new_postfix = postfix
         if len(postfix) > 0: new_postfix = ' ' + new_postfix
-        update_record_filename(new_postfix)
+        update_record_file_name(new_postfix)
 
 def start_recording():
     context.tags = ['user.' + RECORDING_TAG_NAME]
