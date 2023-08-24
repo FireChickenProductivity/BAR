@@ -19,12 +19,15 @@ should_record_in_file = module.setting(
 )
 
 OUTPUT_DIRECTORY = None
-PRIMARY_OUTPUT_FILE = 'record.txt'
-PRIMARY_OUTPUT_PATH = None
+PRIMARY_OUTPUT_FILE_NAME = 'record'
+PRIMARY_OUTPUT_FILE_EXTENSION = '.txt'
+record_file_name_postfix = ''
+primary_output_path = None
 def set_up():
-    global OUTPUT_DIRECTORY, PRIMARY_OUTPUT_PATH
+    global OUTPUT_DIRECTORY, primary_output_path
     OUTPUT_DIRECTORY = os.path.join(actions.path.talon_user(), 'BAR Data')
-    PRIMARY_OUTPUT_PATH = os.path.join(OUTPUT_DIRECTORY, PRIMARY_OUTPUT_FILE)
+    record_filename = PRIMARY_OUTPUT_FILE_NAME + record_file_name_postfix + PRIMARY_OUTPUT_FILE_EXTENSION
+    primary_output_path = os.path.join(OUTPUT_DIRECTORY, record_filename)
     if not os.path.exists(OUTPUT_DIRECTORY):
         os.makedirs(OUTPUT_DIRECTORY)
     if should_record_in_file.get():
@@ -324,7 +327,7 @@ def log(*args):
     print('Basic Action Recorder:', text)
 
 def record_output_to_file(text: str):
-    with open(PRIMARY_OUTPUT_PATH, 'a') as file:
+    with open(primary_output_path, 'a') as file:
         file.write(text + '\n')
 
 def on_phrase(j):
