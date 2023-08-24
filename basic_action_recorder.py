@@ -307,6 +307,13 @@ class Actions:
         '''Unregisters the specified callback function using the name it was registered with'''
         callback_manager.remove_callback_function_with_name(name)
         stop_recording_if_nothing_listening()
+    
+    def basic_action_recorder_update_active_record_name(postfix: str):
+        '''Updates the name of the active record that the basic action recorder will record to when
+            recording the basic action history is enabled'''
+        new_postfix = postfix
+        if len(postfix) > 0: new_postfix = ' ' + new_postfix
+        update_record_filename(new_postfix)
 
 def start_recording():
     context.tags = ['user.' + RECORDING_TAG_NAME]
