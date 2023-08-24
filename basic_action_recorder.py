@@ -26,9 +26,9 @@ primary_output_path = None
 def set_up():
     global OUTPUT_DIRECTORY, primary_output_path
     OUTPUT_DIRECTORY = os.path.join(actions.path.talon_user(), 'BAR Data')
-    update_record_filename('')
     if not os.path.exists(OUTPUT_DIRECTORY):
         os.makedirs(OUTPUT_DIRECTORY)
+    update_record_filename('')
     if should_record_in_file.get():
         start_recording()
     
