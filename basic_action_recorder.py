@@ -44,7 +44,11 @@ def compute_most_recently_updated_record_file_name(directory):
     return name
 
 def filter_for_record_file_names(file_names):
-    pass
+    filtered_names = [name for name in file_names if is_record_file_name(str(name))]
+    return filtered_names
+
+def is_record_file_name(name: str) -> bool:
+    return name.startswith('record') and name.endswith('.txt')
 
 def compute_most_recently_updated_file_name_given_names_and_directory(names, directory):
     pass
