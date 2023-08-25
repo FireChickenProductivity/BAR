@@ -51,7 +51,15 @@ def is_record_file_name(name: str) -> bool:
     return name.startswith('record') and name.endswith('.txt')
 
 def compute_most_recently_updated_file_name_given_names_and_directory(names, directory):
-    pass
+    most_recently_updated_filename = ''
+    most_recent_update_time = 0
+    for name in names:
+        path = os.path.join(directory, path)
+        update_time = os.path.getmtime(path)
+        if update_time > most_recent_update_time:
+            most_recently_updated_filename = name
+            most_recent_update_time = update_time
+    return most_recently_updated_filename
 
 class ActionRecorder:
     def __init__(self):
