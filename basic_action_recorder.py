@@ -29,12 +29,12 @@ def set_up():
     OUTPUT_DIRECTORY = os.path.join(actions.path.talon_user(), 'BAR Data')
     if not os.path.exists(OUTPUT_DIRECTORY):
         os.makedirs(OUTPUT_DIRECTORY)
-    update_record_file_name('')
+    update_record_file_name_to_most_recent()
     if should_record_in_file.get():
         start_recording()
 
 def update_record_file_name_to_most_recent():
-    name = compute_most_recently_updated_record_file_name()
+    name = compute_most_recently_updated_record_file_name(OUTPUT_DIRECTORY)
     postfix = ''
     if name != PRIMARY_OUTPUT_FILE_NAME: postfix = compute_record_name_postfix(name)
     update_record_file_name(postfix)
@@ -69,7 +69,7 @@ def compute_most_recently_updated_file_name_given_names_and_directory(names, dir
     most_recently_updated_filename = ''
     most_recent_update_time = 0
     for name in names:
-        path = os.path.join(directory, path)
+        path = os.path.join(directory, name)
         update_time = os.path.getmtime(path)
         if update_time > most_recent_update_time:
             most_recently_updated_filename = name
