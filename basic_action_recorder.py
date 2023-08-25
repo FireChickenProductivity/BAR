@@ -21,7 +21,6 @@ should_record_in_file = module.setting(
 OUTPUT_DIRECTORY = None
 PRIMARY_OUTPUT_FILE_NAME = 'record'
 PRIMARY_OUTPUT_FILE_EXTENSION = '.txt'
-NON_PRIMARY_OUTPUT_FILE_NAME_PREFIX = 'record '
 record_file_name_postfix = ''
 primary_output_path = None
 def set_up():
@@ -44,7 +43,7 @@ def compute_record_name_postfix(name: str) -> str:
     if name == PRIMARY_OUTPUT_FILE_NAME + PRIMARY_OUTPUT_FILE_EXTENSION:
         postfix = ''
     else:
-        postfix = name[len(NON_PRIMARY_OUTPUT_FILE_NAME_PREFIX):-len(PRIMARY_OUTPUT_FILE_EXTENSION)]
+        postfix = name[len(PRIMARY_OUTPUT_FILE_NAME):-len(PRIMARY_OUTPUT_FILE_EXTENSION)]
     return postfix
 
 def update_record_file_name(postfix: str):
