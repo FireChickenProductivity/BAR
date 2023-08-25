@@ -21,6 +21,7 @@ should_record_in_file = module.setting(
 OUTPUT_DIRECTORY = None
 PRIMARY_OUTPUT_FILE_NAME = 'record'
 PRIMARY_OUTPUT_FILE_EXTENSION = '.txt'
+NON_PRIMARY_OUTPUT_FILE_NAME_PREFIX = 'record '
 record_file_name_postfix = ''
 primary_output_path = None
 def set_up():
@@ -31,7 +32,21 @@ def set_up():
     update_record_file_name('')
     if should_record_in_file.get():
         start_recording()
-    
+
+def update_record_file_name_to_most_recent():
+    name = compute_most_recently_updated_record_file_name()
+    postfix = ''
+    if name != PRIMARY_OUTPUT_FILE_NAME: postfix = compute_record_name_postfix(name)
+    update_record_file_name(postfix)
+
+def compute_record_name_postfix(name: str) -> str:
+    postfix = ''
+    if name == PRIMARY_OUTPUT_FILE_NAME + PRIMARY_OUTPUT_FILE_EXTENSION:
+        postfix = ''
+    else:
+        postfix = name[len(NON_PRIMARY_OUTPUT_FILE_NAME_PREFIX):-len(PRIMARY_OUTPUT_FILE_EXTENSION)]
+    return postfix
+
 def update_record_file_name(postfix: str):
     global primary_output_path
     record_filename = PRIMARY_OUTPUT_FILE_NAME + postfix + PRIMARY_OUTPUT_FILE_EXTENSION
@@ -50,7 +65,7 @@ def filter_for_record_file_names(file_names):
 def is_record_file_name(name: str) -> bool:
     return name.startswith('record') and name.endswith('.txt')
 
-def compute_most_recently_updated_file_name_given_names_and_directory(names, directory):
+def compute_most_recently_updated_file_name_given_names_and_directory(names, directory) -> str:
     most_recently_updated_filename = ''
     most_recent_update_time = 0
     for name in names:
