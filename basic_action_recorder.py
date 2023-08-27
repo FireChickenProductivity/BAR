@@ -35,7 +35,7 @@ def set_up():
 def update_record_file_name_to_most_recent():
     name = compute_most_recently_updated_record_file_name(OUTPUT_DIRECTORY)
     postfix = ''
-    if name != PRIMARY_OUTPUT_FILE_NAME: postfix = compute_record_name_postfix(name)
+    if name != PRIMARY_OUTPUT_FILE_NAME and name != '': postfix = compute_record_name_postfix(name)
     update_record_file_name(postfix)
 
 def compute_record_name_postfix(name: str) -> str:
