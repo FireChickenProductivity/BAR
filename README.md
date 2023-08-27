@@ -16,6 +16,10 @@ bar history show: Show a command history including basic actions, command names,
 
 bar history hide: Hide the bar history. 
 
+bar use main record: Causes the basic action recorder to store its recording in record.txt if recording into a file is enabled.
+
+bar record in (say a name here): Causes the basic action recorder to store its recording in "record (the dictated name).txt" if recording into a file is enabled.
+
 # Registering Callback Functions
 
 The following action can be used to register a callback function that gets called when a basic action is performed with a corresponding BasicAction object:
@@ -29,7 +33,7 @@ The following action can be used to unregister a callback function using the nam
 basic_action_recorder_unregister_callback_function_with_name(name: str)
 
 # Settings
-If user.basic_action_recorder_record_in_file is set to any integer other than 0, the basic action history is outputted to the record.txt file in the BAR Data directory. The setting is 0 by default. 
+If user.basic_action_recorder_record_in_file is set to any integer other than 0, the basic action history is outputted to the record file in the BAR Data directory. The setting is 0 by default. By default, the basic action recorder will store any recordings in the most recently updated record file on startup. Which record is used can be changed with the above record commands. 
 
 # Command Recommendation Generation
-The basic_action_record_analysis.py program can be used to output recommended voice commands to generate to improve productivity based on the previously mentioned record.txt. The program is currently very simplistic and a work in progress. Recommendations get generated in the BAR Data directory in files named "recommendations (time of generation here).txt". 
+The basic_action_record_analysis.py program can be used to output recommended voice commands to generate to improve productivity based on the previously mentioned record.txt. The program is currently very simplistic and a work in progress. Recommendations get generated in the BAR Data directory in files named "recommendations (time of generation here).txt".

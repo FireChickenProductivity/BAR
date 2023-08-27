@@ -19,16 +19,61 @@ should_record_in_file = module.setting(
 )
 
 OUTPUT_DIRECTORY = None
-PRIMARY_OUTPUT_FILE = 'record.txt'
-PRIMARY_OUTPUT_PATH = None
+PRIMARY_OUTPUT_FILE_NAME = 'record'
+PRIMARY_OUTPUT_FILE_EXTENSION = '.txt'
+record_file_name_postfix = ''
+primary_output_path = None
 def set_up():
-    global OUTPUT_DIRECTORY, PRIMARY_OUTPUT_PATH
+    global OUTPUT_DIRECTORY, primary_output_path
     OUTPUT_DIRECTORY = os.path.join(actions.path.talon_user(), 'BAR Data')
-    PRIMARY_OUTPUT_PATH = os.path.join(OUTPUT_DIRECTORY, PRIMARY_OUTPUT_FILE)
     if not os.path.exists(OUTPUT_DIRECTORY):
         os.makedirs(OUTPUT_DIRECTORY)
+    update_record_file_name_to_most_recent()
     if should_record_in_file.get():
         start_recording()
+
+def update_record_file_name_to_most_recent():
+    name = compute_most_recently_updated_record_file_name(OUTPUT_DIRECTORY)
+    postfix = ''
+    if name != PRIMARY_OUTPUT_FILE_NAME and name != '': postfix = compute_record_name_postfix(name)
+    update_record_file_name(postfix)
+
+def compute_record_name_postfix(name: str) -> str:
+    postfix = ''
+    if name == PRIMARY_OUTPUT_FILE_NAME + PRIMARY_OUTPUT_FILE_EXTENSION:
+        postfix = ''
+    else:
+        postfix = name[len(PRIMARY_OUTPUT_FILE_NAME):-len(PRIMARY_OUTPUT_FILE_EXTENSION)]
+    return postfix
+
+def update_record_file_name(postfix: str):
+    global primary_output_path
+    record_filename = PRIMARY_OUTPUT_FILE_NAME + postfix + PRIMARY_OUTPUT_FILE_EXTENSION
+    primary_output_path = os.path.join(OUTPUT_DIRECTORY, record_filename)
+
+def compute_most_recently_updated_record_file_name(directory):
+    files_in_directory = os.listdir(directory)
+    record_file_names_in_directory = filter_for_record_file_names(files_in_directory)
+    name = compute_most_recently_updated_file_name_given_names_and_directory(record_file_names_in_directory, directory)
+    return name
+
+def filter_for_record_file_names(file_names):
+    filtered_names = [name for name in file_names if is_record_file_name(str(name))]
+    return filtered_names
+
+def is_record_file_name(name: str) -> bool:
+    return name.startswith('record') and name.endswith('.txt')
+
+def compute_most_recently_updated_file_name_given_names_and_directory(names, directory) -> str:
+    most_recently_updated_filename = ''
+    most_recent_update_time = 0
+    for name in names:
+        path = os.path.join(directory, name)
+        update_time = os.path.getmtime(path)
+        if update_time > most_recent_update_time:
+            most_recently_updated_filename = name
+            most_recent_update_time = update_time
+    return most_recently_updated_filename
 
 class ActionRecorder:
     def __init__(self):
@@ -300,6 +345,13 @@ class Actions:
         '''Unregisters the specified callback function using the name it was registered with'''
         callback_manager.remove_callback_function_with_name(name)
         stop_recording_if_nothing_listening()
+    
+    def basic_action_recorder_update_active_record_name(postfix: str):
+        '''Updates the name of the active record that the basic action recorder will record to when
+            recording the basic action history is enabled'''
+        new_postfix = postfix
+        if len(postfix) > 0: new_postfix = ' ' + new_postfix
+        update_record_file_name(new_postfix)
 
 def start_recording():
     context.tags = ['user.' + RECORDING_TAG_NAME]
@@ -324,7 +376,7 @@ def log(*args):
     print('Basic Action Recorder:', text)
 
 def record_output_to_file(text: str):
-    with open(PRIMARY_OUTPUT_PATH, 'a') as file:
+    with open(primary_output_path, 'a') as file:
         file.write(text + '\n')
 
 def on_phrase(j):
