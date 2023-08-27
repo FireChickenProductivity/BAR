@@ -353,6 +353,10 @@ class Actions:
         if len(postfix) > 0: new_postfix = ' ' + new_postfix
         update_record_file_name(new_postfix)
 
+    def basic_action_recorder_insert_data_directory_path():
+        '''Types out the path to the basic action recorder data directory'''
+        actions.insert(OUTPUT_DIRECTORY)
+
 def start_recording():
     context.tags = ['user.' + RECORDING_TAG_NAME]
 
