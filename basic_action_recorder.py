@@ -391,9 +391,17 @@ def record_recording_start_to_file_if_needed():
     if should_record_time_information.get():
         record_output_to_file(RECORDING_START_MESSAGE)
 
+def record_outputs_to_file(outputs):
+    with open(primary_output_path, 'a') as file:
+        for output in outputs:
+            write_output_line_to_file(output, file)
+
 def record_output_to_file(text: str):
     with open(primary_output_path, 'a') as file:
-        file.write(text + '\n')
+        write_output_line_to_file(text, file)
+
+def write_output_line_to_file(output, file):
+    file.write(output + '\n')
 
 def on_phrase(j):
     global history
