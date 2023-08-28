@@ -132,6 +132,7 @@ class CommandChain(Command):
         return self.chain_size
 
 COMMAND_NAME_PREFIX = 'Command: '
+RECORDING_START_MESSAGE = 'START'
 
 def read_file_record(path: str):
     '''Obtains a list of the basic actions performed by the commands in the specified record file'''

@@ -1,5 +1,5 @@
 from talon import Module, actions, Context, imgui, speech_system, app, settings
-from .action_records import BasicAction
+from .action_records import BasicAction, RECORDING_START_MESSAGE
 import os
 from typing import Callable
 
@@ -29,8 +29,7 @@ def set_up():
     if not os.path.exists(OUTPUT_DIRECTORY):
         os.makedirs(OUTPUT_DIRECTORY)
     update_record_file_name_to_most_recent()
-    if should_record_in_file.get():
-        start_recording()
+    start_recording_when_should_record_in_file(should_record_in_file.get())
 
 def update_record_file_name_to_most_recent():
     name = compute_most_recently_updated_record_file_name(OUTPUT_DIRECTORY)
@@ -367,6 +366,7 @@ def stop_recording_if_nothing_listening():
 def start_recording_when_should_record_in_file(should_record_in_file):
     if should_record_in_file:
         start_recording()
+        record_recording_start_to_file()
     else:
         stop_recording_if_nothing_listening()
     
@@ -378,6 +378,9 @@ def log(*args):
         string_arguments.append(str(argument))
     text = ' '.join(string_arguments)
     print('Basic Action Recorder:', text)
+
+def record_recording_start_to_file():
+    record_output_to_file(RECORDING_START_MESSAGE)
 
 def record_output_to_file(text: str):
     with open(primary_output_path, 'a') as file:
