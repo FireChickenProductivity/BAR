@@ -18,6 +18,14 @@ should_record_in_file = module.setting(
     desc = 'Determines if the basic action recorder should record actions in a file for analysis. 0 means false and any other integer means true.'
 )
 
+should_record_time_information = module.setting(
+    'basic_action_recorder_record_time_information_in_file',
+    type = int,
+    default = 1,
+    desc = '''Determines if the basic action recorder should record time information in the record file when recording in the file. 
+    0 means false and any other integer means true.'''
+)
+
 OUTPUT_DIRECTORY = None
 PRIMARY_OUTPUT_FILE_NAME = 'record'
 PRIMARY_OUTPUT_FILE_EXTENSION = '.txt'
@@ -366,7 +374,7 @@ def stop_recording_if_nothing_listening():
 def start_recording_when_should_record_in_file(should_record_in_file):
     if should_record_in_file:
         start_recording()
-        record_recording_start_to_file()
+        record_recording_start_to_file_if_needed()
     else:
         stop_recording_if_nothing_listening()
     
@@ -379,8 +387,9 @@ def log(*args):
     text = ' '.join(string_arguments)
     print('Basic Action Recorder:', text)
 
-def record_recording_start_to_file():
-    record_output_to_file(RECORDING_START_MESSAGE)
+def record_recording_start_to_file_if_needed():
+    if should_record_time_information.get():
+        record_output_to_file(RECORDING_START_MESSAGE)
 
 def record_output_to_file(text: str):
     with open(primary_output_path, 'a') as file:
