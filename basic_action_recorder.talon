@@ -1,3 +1,4 @@
+not tag: user.exam_mode
 -
 bar start recording: user.basic_action_recorder_start_recording()
 bar stop recording: user.basic_action_recorder_stop_recording()
