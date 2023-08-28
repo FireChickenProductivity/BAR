@@ -20,6 +20,8 @@ bar use main record: Causes the basic action recorder to store its recording in 
 
 bar record in (say a name here): Causes the basic action recorder to store its recording in "record (the dictated name).txt" if recording into a file is enabled.
 
+bar insert data path: Types out the path to BAR data.
+
 # Registering Callback Functions
 
 The following action can be used to register a callback function that gets called when a basic action is performed with a corresponding BasicAction object:

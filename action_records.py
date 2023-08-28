@@ -32,7 +32,7 @@ class BasicAction:
         return self.arguments
     
     def to_json(self) -> str:
-        return json.dumps({'name': self.name, 'arguments': self.arguments})
+        return json.dumps({'name': self.name, 'arguments': self.arguments}, cls = BasicActionEncoder)
     
     @staticmethod
     def from_json(text: str):
@@ -40,12 +40,50 @@ class BasicAction:
         return BasicAction(representation['name'], representation['arguments'])
     
     def __eq__(self, other) -> bool:
-        return self.name == other.name and self.arguments == other.arguments
+        return other is not None and self.name == other.name and self.arguments == other.arguments
+    
+    def __repr__(self):
+        return self.__str__()
+    
+    def __str__(self):
+        return self.to_json()
+
+class BasicActionEncoder(json.JSONEncoder):
+    def default(self, object):
+        if isinstance(object, TalonCapture):
+            return object.to_json()
+        return json.JSONEncoder.default(self, object)
 
 def compute_talon_script_boolean_value(value: bool):
     if value:
         return 1
     return 0
+
+class TalonCapture:
+    def __init__(self, name: str, instance: int, postfix: str = ''):
+        self.name = name
+        self.instance = instance
+        self.postfix = postfix
+    
+    def __repr__(self):
+        return self.__str__()
+    
+    def __str__(self):
+        return self.name + '_' + str(self.instance) + self.postfix
+    
+    def compute_command_component(self):
+        return f'<{self.name}>'
+    
+    def to_json(self):
+        return json.dumps({'name': self.name, 'instance': self.instance})
+    
+    @staticmethod
+    def from_json(json):
+        attributes = json.loads(json)
+        return TalonCapture(attributes['name'], attributes['instance'])
+
+    def __eq__(self, other) -> bool:
+        return self.name == other.name and self.instance == other.instance and self.postfix == other.postfix
 
 class Command:
     def __init__(self, name: str, actions):
@@ -57,16 +95,41 @@ class Command:
     
     def get_actions(self):
         return self.actions
-
-    def append_command(self, command):
-        self.name += f' {command.get_name()}'
-        self.actions.extend(command.get_actions())
     
     def copy(self):
         return Command(self.name, self.actions[:])
     
     def has_same_actions_as(self, other):
         return self.actions == other.actions
+    
+    def set_name(self, name: str):
+        self.name = name
+
+class CommandChain(Command):
+    def __init__(self, name: str, actions, chain_number: int = 0, chain_size: int = 0):
+        super().__init__(name, actions)
+        self.chain_number: int = chain_number
+        self.chain_size: int = chain_size
+
+    def append_command(self, command):
+        if self.name is None:
+            self.name = command.get_name()
+        else:
+            self.name += f' {command.get_name()}'
+        self.actions.extend(command.get_actions())
+        self.chain_size += 1
+    
+    def get_chain_number(self):
+        return self.chain_number
+    
+    def get_chain_ending_index(self):
+        return self.get_next_chain_index() - 1
+    
+    def get_next_chain_index(self):
+        return self.chain_number + self.chain_size
+    
+    def get_size(self):
+        return self.chain_size
 
 COMMAND_NAME_PREFIX = 'Command: '
 
