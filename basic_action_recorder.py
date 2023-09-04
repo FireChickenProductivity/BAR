@@ -394,12 +394,13 @@ def record_recording_start_to_file_if_needed():
         record_output_to_file(RECORDING_START_MESSAGE)
 
 def record_command_start_to_file_record(text: str):
-    output = [text]
+    output = []
     time_difference_manager.receive_current_time()
     if should_record_time_information.get():
         time_difference = time_difference_manager.get_difference()
         time_difference_text = compute_time_difference_text(time_difference)
         output.append(time_difference_text)
+    output.append(text)
     record_outputs_to_file(output)
 
 def record_action_to_file_record(text: str):
