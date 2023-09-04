@@ -1,5 +1,6 @@
 from talon import Module, actions, Context, imgui, speech_system, app, settings
 from .action_records import BasicAction, RECORDING_START_MESSAGE
+from .time_difference import TimeDifference
 import os
 from typing import Callable
 
@@ -206,6 +207,7 @@ class CallbackManager:
     def handle_action(self, action):
         for function_name in self.functions: self.functions[function_name](action)
 
+time_difference_manager = TimeDifference()
 recorder = ActionRecorder()
 history = ActionHistory()
 callback_manager = CallbackManager()
@@ -390,6 +392,15 @@ def log(*args):
 def record_recording_start_to_file_if_needed():
     if should_record_time_information.get():
         record_output_to_file(RECORDING_START_MESSAGE)
+
+def record_command_start_to_file_record(text: str):
+    output = [text]
+    if should_record_time_information.get():
+        time_difference_manager.receive_current_time()
+        time_difference = time_difference_manager.get_difference()
+        time_difference_text = compute_time_difference_text(time_difference)
+        output.append(time_difference_text)
+    record_outputs_to_file(output)
 
 def record_outputs_to_file(outputs):
     with open(primary_output_path, 'a') as file:
