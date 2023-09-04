@@ -86,11 +86,12 @@ class TalonCapture:
         return self.name == other.name and self.instance == other.instance and self.postfix == other.postfix
 
 class Command:
-    def __init__(self, name: str, actions):
+    def __init__(self, name: str, actions, seconds_since_action: int = None):
         self.name = name
         self.actions = actions
+        self.seconds_since_action = seconds_since_action
     
-    def get_name(self):
+    def get_name(self) -> str:
         return self.name
     
     def get_actions(self):
@@ -99,11 +100,17 @@ class Command:
     def copy(self):
         return Command(self.name, self.actions[:])
     
-    def has_same_actions_as(self, other):
+    def has_same_actions_as(self, other) -> bool:
         return self.actions == other.actions
     
-    def set_name(self, name: str):
+    def set_name(self, name: str) -> None:
         self.name = name
+    
+    def is_time_information_available(self) -> bool:
+        return self.seconds_since_action is not None
+    
+    def get_seconds_since_action(self) -> int:
+        return self.seconds_since_action
 
 class CommandChain(Command):
     def __init__(self, name: str, actions, chain_number: int = 0, chain_size: int = 0):
@@ -140,6 +147,8 @@ def read_file_record(path: str):
     commands = []
     current_command_name = ''
     current_command_actions = []
+    seconds_since_last_action = None
+    seconds_since_last_action_for_next_command = None
     with open(path, 'r') as file:
         line = file.readline()
         while line:
@@ -148,9 +157,13 @@ def read_file_record(path: str):
                 current_command_actions.append(BasicAction.from_json(line_without_trailing_newline))
             elif line.startswith(COMMAND_NAME_PREFIX):
                 if len(current_command_actions) > 0:
-                    commands.append(Command(current_command_name, current_command_actions[:])) 
+                    commands.append(Command(current_command_name, current_command_actions[:], seconds_since_last_action)) 
                 current_command_name = compute_command_name_without_prefix(line_without_trailing_newline)
                 current_command_actions = []
+                seconds_since_last_action = None
+            elif line.startswith(TIME_DIFFERENCE_PREFIX):
+                seconds_since_last_action = seconds_since_last_action_for_next_command
+                seconds_since_last_action_for_next_command = compute_seconds_since_last_action(line)
             line = file.readline()
         if len(current_command_actions) > 0:
             commands.append(Command(current_command_name, current_command_actions[:])) 
@@ -158,7 +171,10 @@ def read_file_record(path: str):
 
 def compute_command_name_without_prefix(command_name: str):
     return command_name[len(COMMAND_NAME_PREFIX):]
- 
+
+def compute_seconds_since_last_action(time_record: str) -> int:
+    return time_record[1:]
+
 def is_action(text: str):
     return text.startswith('{')
 
