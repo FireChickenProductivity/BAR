@@ -402,6 +402,10 @@ def record_command_start_to_file_record(text: str):
         output.append(time_difference_text)
     record_outputs_to_file(output)
 
+def record_action_to_file_record(text: str):
+    time_difference_manager.receive_current_time()
+    record_output_to_file(text)
+
 def record_outputs_to_file(outputs):
     with open(primary_output_path, 'a') as file:
         for output in outputs:
