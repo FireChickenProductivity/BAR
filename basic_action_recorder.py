@@ -395,8 +395,8 @@ def record_recording_start_to_file_if_needed():
 
 def record_command_start_to_file_record(text: str):
     output = [text]
+    time_difference_manager.receive_current_time()
     if should_record_time_information.get():
-        time_difference_manager.receive_current_time()
         time_difference = time_difference_manager.get_difference()
         time_difference_text = compute_time_difference_text(time_difference)
         output.append(time_difference_text)
