@@ -206,6 +206,19 @@ class CallbackManager:
     def handle_action(self, action):
         for function_name in self.functions: self.functions[function_name](action)
 
+class TimeDifference:
+    def __init__(self):
+        self.last_timestamp = None
+        self.last_difference = 0
+    
+    def receive_new_time(self, time):
+        if self.last_timestamp:
+            self.last_difference = time - self.last_timestamp
+        self.last_timestamp = time
+    
+    def get_difference(self):
+        return self.last_difference
+
 recorder = ActionRecorder()
 history = ActionHistory()
 callback_manager = CallbackManager()
