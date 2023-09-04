@@ -1,5 +1,5 @@
 from talon import Module, actions, Context, imgui, speech_system, app, settings
-from .action_records import BasicAction, RECORDING_START_MESSAGE
+from .action_records import BasicAction, RECORDING_START_MESSAGE, compute_time_difference_text
 from .time_difference import TimeDifference
 import os
 from typing import Callable

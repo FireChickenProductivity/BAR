@@ -133,6 +133,7 @@ class CommandChain(Command):
 
 COMMAND_NAME_PREFIX = 'Command: '
 RECORDING_START_MESSAGE = 'START'
+TIME_DIFFERENCE_PREFIX = 'T'
 
 def read_file_record(path: str):
     '''Obtains a list of the basic actions performed by the commands in the specified record file'''
@@ -158,7 +159,8 @@ def read_file_record(path: str):
 def compute_command_name_without_prefix(command_name: str):
     return command_name[len(COMMAND_NAME_PREFIX):]
  
-
-
 def is_action(text: str):
     return text.startswith('{')
+
+def compute_time_difference_text(difference: int) -> str:
+    return TIME_DIFFERENCE_PREFIX + str(difference)
