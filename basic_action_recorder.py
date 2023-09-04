@@ -103,7 +103,7 @@ class ActionRecorder:
         if not self.temporarily_rejecting_actions and self.should_record_when_not_temporarily_rejecting_actions():
             action = BasicAction(name, arguments)
             if self.recording_actions_in_primary_memory: self.record_action(action)
-            if should_record_in_file.get(): record_output_to_file(action.to_json())
+            if should_record_in_file.get(): record_action_to_file_record(action.to_json())
             if callback_manager.is_listening(): callback_manager.handle_action(action)
     
     def should_record_when_not_temporarily_rejecting_actions(self):
@@ -427,7 +427,7 @@ def on_phrase(j):
             if history.is_recording_history():
                 history.record_action('Command: ' + command_chain)
             if should_record_in_file.get() != 0:
-                record_output_to_file('Command: ' + command_chain)
+                record_command_start_to_file_record('Command: ' + command_chain)
 
 speech_system.register('phrase', on_phrase)
 
@@ -436,7 +436,7 @@ def on_noise(name: str, finished: bool):
         history.record_action(f'Noise: {name} {compute_noise_postfix(finished)}')
     
     if should_record_in_file.get():
-        record_output_to_file('Command: ' + 'noise_' + name + '_' + compute_noise_postfix(finished))
+        record_command_start_to_file_record('Command: ' + 'noise_' + name + '_' + compute_noise_postfix(finished))
 
 def compute_noise_postfix(finished: bool):
     return "start" if finished else "end"
