@@ -112,6 +112,15 @@ class Command:
     def get_seconds_since_action(self) -> int:
         return self.seconds_since_action
 
+    def __repr__(self):
+        return self.__str__()
+
+    def __str__(self):
+        representation =  f'Command({self.name}{", " + str(self.seconds_since_action) if self.is_time_information_available() else ""},\n'
+        for action in self.actions: representation += str(action) + '\n'
+        representation += ')'
+        return representation
+
 class CommandChain(Command):
     def __init__(self, name: str, actions, chain_number: int = 0, chain_size: int = 0):
         super().__init__(name, actions)
