@@ -169,25 +169,28 @@ class RecordParser:
         self.parse_path(path)
 
     def parse_path(self, path: str):
+        self.process_file_lines(path)
+        if self.is_command_found():
+            self.add_last_command() 
+    
+    def process_file_lines(self, path: str):
         with open(path, 'r') as file:
             line = file.readline()
             while line:
-                self.process_line(line)
+                line_without_trailing_newline = line.strip()
+                self.process_line(line_without_trailing_newline)
                 line = file.readline()
-            if len(self.current_command_actions) > 0:
-                self.commands.append(Command(self.current_command_name, self.current_command_actions[:], self.seconds_since_last_action_for_next_command)) 
-    
+
     def process_line(self, line: str):
-        line_without_trailing_newline = line.strip()
-        if is_action(line_without_trailing_newline):
-            self.add_action_based_on_line(line_without_trailing_newline)
+        if is_action(line):
+            self.add_action_based_on_line(line)
         elif is_line_command_start(line):
-            self.process_command_start(line_without_trailing_newline)
+            self.process_command_start(line)
         elif is_line_time_deference(line):
-            self.process_time_difference(line_without_trailing_newline)
-        elif is_line_recording_start(line_without_trailing_newline):
+            self.process_time_difference(line)
+        elif is_line_recording_start(line):
             self.process_recording_start()
-        if is_line_command_ending(line_without_trailing_newline):
+        if is_line_command_ending(line):
             self.reset_command_information_except_name()
      
     def add_action_based_on_line(self, line_without_trailing_newline: str):
@@ -198,8 +201,11 @@ class RecordParser:
         self.current_command_name = compute_command_name_without_prefix(line_without_trailing_newline)
 
     def add_current_command_if_available(self):
-        if len(self.current_command_actions) > 0:
+        if self.is_command_found():
             self.add_current_command()
+
+    def is_command_found(self):
+        return len(self.current_command_actions) > 0
 
     def add_current_command(self):
         self.commands.append(Command(self.current_command_name, self.current_command_actions[:], self.seconds_since_last_action))
@@ -220,6 +226,9 @@ class RecordParser:
         if not self.time_information_found_after_command:
             self.seconds_since_last_action_for_next_command = None
         self.time_information_found_after_command = False
+
+    def add_last_command(self):
+        self.commands.append(Command(self.current_command_name, self.current_command_actions[:], self.seconds_since_last_action_for_next_command)) 
 
     def get_record(self):
         return self.commands
