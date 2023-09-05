@@ -158,6 +158,7 @@ def read_file_record(path: str):
     current_command_actions = []
     seconds_since_last_action = None
     seconds_since_last_action_for_next_command = None
+    time_information_found_after_command = False
     with open(path, 'r') as file:
         line = file.readline()
         while line:
@@ -170,12 +171,16 @@ def read_file_record(path: str):
                 current_command_name = compute_command_name_without_prefix(line_without_trailing_newline)
                 current_command_actions = []
                 seconds_since_last_action = None
+                if not time_information_found_after_command:
+                    seconds_since_last_action_for_next_command = None
+                time_information_found_after_command = False
             elif line.startswith(TIME_DIFFERENCE_PREFIX):
                 seconds_since_last_action = seconds_since_last_action_for_next_command
                 seconds_since_last_action_for_next_command = compute_seconds_since_last_action(line)
+                time_information_found_after_command = True
             line = file.readline()
         if len(current_command_actions) > 0:
-            commands.append(Command(current_command_name, current_command_actions[:])) 
+            commands.append(Command(current_command_name, current_command_actions[:], seconds_since_last_action_for_next_command)) 
     return commands
 
 def compute_command_name_without_prefix(command_name: str):
