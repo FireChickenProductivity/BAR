@@ -185,7 +185,7 @@ class RecordParser:
             self.process_command_start(line_without_trailing_newline)
         elif is_line_time_deference(line):
             self.process_time_difference(line_without_trailing_newline)
-        if is_line_recording_start(line_without_trailing_newline):
+        elif is_line_recording_start(line_without_trailing_newline):
             self.process_recording_start()
         if is_line_command_ending(line_without_trailing_newline):
             self.reset_command_information_except_name()
@@ -194,9 +194,12 @@ class RecordParser:
         self.current_command_actions.append(BasicAction.from_json(line_without_trailing_newline))
 
     def process_command_start(self, line_without_trailing_newline: str):
+        self.add_current_command_if_available()
+        self.current_command_name = compute_command_name_without_prefix(line_without_trailing_newline)
+
+    def add_current_command_if_available(self):
         if len(self.current_command_actions) > 0:
             self.add_current_command()
-        self.current_command_name = compute_command_name_without_prefix(line_without_trailing_newline)
 
     def add_current_command(self):
         self.commands.append(Command(self.current_command_name, self.current_command_actions[:], self.seconds_since_last_action))
@@ -207,6 +210,7 @@ class RecordParser:
         self.time_information_found_after_command = True
 
     def process_recording_start(self):
+        self.add_current_command_if_available()
         self.commands.append(RecordingStart())
         self.current_command_name = ''
 
