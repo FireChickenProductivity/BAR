@@ -233,7 +233,6 @@ class RecordParser:
     def get_record(self):
         return self.commands
 
-
 def read_file_record(path: str):
     '''Obtains a list of the basic actions performed by the commands in the specified record file'''
     parser = RecordParser(path)
@@ -262,10 +261,3 @@ def is_line_time_deference(line: str):
 
 def is_line_recording_start(line_without_trailing_newline: str):
     return line_without_trailing_newline == RECORDING_START_MESSAGE
-
-result = read_file_record('C:\\Users\\Samuel\\AppData\\Roaming\\talon\\user\\BAR Data\\record short.txt')
-for command in result:
-    if command.is_command_record():
-        print(command)
-    else:
-        print('recordings start')
