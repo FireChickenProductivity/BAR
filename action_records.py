@@ -171,7 +171,7 @@ class RecordParser:
     def parse_path(self, path: str):
         self.process_file_lines(path)
         if self.is_command_found():
-            self.add_last_command() 
+            self.add_current_command() 
     
     def process_file_lines(self, path: str):
         with open(path, 'r') as file:
@@ -208,7 +208,10 @@ class RecordParser:
         return len(self.current_command_actions) > 0
 
     def add_current_command(self):
-        self.commands.append(Command(self.current_command_name, self.current_command_actions[:], self.seconds_since_last_action))
+        seconds_since_last_action = self.seconds_since_last_action
+        if not self.time_information_found_after_command:
+            seconds_since_last_action = self.seconds_since_last_action_for_next_command
+        self.commands.append(Command(self.current_command_name, self.current_command_actions[:], seconds_since_last_action))
 
     def process_time_difference(self, line_without_trailing_newline):
         self.seconds_since_last_action = self.seconds_since_last_action_for_next_command
@@ -226,9 +229,6 @@ class RecordParser:
         if not self.time_information_found_after_command:
             self.seconds_since_last_action_for_next_command = None
         self.time_information_found_after_command = False
-
-    def add_last_command(self):
-        self.commands.append(Command(self.current_command_name, self.current_command_actions[:], self.seconds_since_last_action_for_next_command)) 
 
     def get_record(self):
         return self.commands
