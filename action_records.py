@@ -112,6 +112,9 @@ class Command:
     def get_seconds_since_action(self) -> int:
         return self.seconds_since_action
 
+    def is_command_record(self):
+        return True
+
     def __repr__(self):
         return self.__str__()
 
@@ -147,6 +150,10 @@ class CommandChain(Command):
     def get_size(self):
         return self.chain_size
 
+class RecordingStart:
+    def is_command_record(self):
+        return False
+
 COMMAND_NAME_PREFIX = 'Command: '
 RECORDING_START_MESSAGE = 'START'
 TIME_DIFFERENCE_PREFIX = 'T'
@@ -165,7 +172,7 @@ def read_file_record(path: str):
             line_without_trailing_newline = line.strip()
             if is_action(line_without_trailing_newline):
                 current_command_actions.append(BasicAction.from_json(line_without_trailing_newline))
-            elif line.startswith(COMMAND_NAME_PREFIX):
+            elif line.startswith(COMMAND_NAME_PREFIX) or line_without_trailing_newline == RECORDING_START_MESSAGE:
                 if len(current_command_actions) > 0:
                     commands.append(Command(current_command_name, current_command_actions[:], seconds_since_last_action)) 
                 current_command_name = compute_command_name_without_prefix(line_without_trailing_newline)
@@ -176,8 +183,10 @@ def read_file_record(path: str):
                 time_information_found_after_command = False
             elif line.startswith(TIME_DIFFERENCE_PREFIX):
                 seconds_since_last_action = seconds_since_last_action_for_next_command
-                seconds_since_last_action_for_next_command = compute_seconds_since_last_action(line)
+                seconds_since_last_action_for_next_command = compute_seconds_since_last_action(line_without_trailing_newline)
                 time_information_found_after_command = True
+            if line_without_trailing_newline == RECORDING_START_MESSAGE:
+                commands.append(RecordingStart())
             line = file.readline()
         if len(current_command_actions) > 0:
             commands.append(Command(current_command_name, current_command_actions[:], seconds_since_last_action_for_next_command)) 
