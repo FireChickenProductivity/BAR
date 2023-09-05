@@ -186,8 +186,8 @@ class RecordParser:
         elif is_line_time_deference(line):
             self.process_time_difference(line_without_trailing_newline)
         if is_line_recording_start(line_without_trailing_newline):
-            self.process_time_difference()
-        if is_line_command_ending():
+            self.process_recording_start()
+        if is_line_command_ending(line_without_trailing_newline):
             self.reset_command_information_except_name()
      
     def add_action_based_on_line(self, line_without_trailing_newline: str):
@@ -223,37 +223,8 @@ class RecordParser:
 
 def read_file_record(path: str):
     '''Obtains a list of the basic actions performed by the commands in the specified record file'''
-    commands = []
-    current_command_name = ''
-    current_command_actions = []
-    seconds_since_last_action = None
-    seconds_since_last_action_for_next_command = None
-    time_information_found_after_command = False
-    with open(path, 'r') as file:
-        line = file.readline()
-        while line:
-            line_without_trailing_newline = line.strip()
-            if is_action(line_without_trailing_newline):
-                current_command_actions.append(BasicAction.from_json(line_without_trailing_newline))
-            elif line.startswith(COMMAND_NAME_PREFIX) or line_without_trailing_newline == RECORDING_START_MESSAGE:
-                if len(current_command_actions) > 0:
-                    commands.append(Command(current_command_name, current_command_actions[:], seconds_since_last_action)) 
-                current_command_name = compute_command_name_without_prefix(line_without_trailing_newline)
-                current_command_actions = []
-                seconds_since_last_action = None
-                if not time_information_found_after_command:
-                    seconds_since_last_action_for_next_command = None
-                time_information_found_after_command = False
-            elif line.startswith(TIME_DIFFERENCE_PREFIX):
-                seconds_since_last_action = seconds_since_last_action_for_next_command
-                seconds_since_last_action_for_next_command = compute_seconds_since_last_action(line_without_trailing_newline)
-                time_information_found_after_command = True
-            if line_without_trailing_newline == RECORDING_START_MESSAGE:
-                commands.append(RecordingStart())
-            line = file.readline()
-        if len(current_command_actions) > 0:
-            commands.append(Command(current_command_name, current_command_actions[:], seconds_since_last_action_for_next_command)) 
-    return commands
+    parser = RecordParser(path)
+    return parser.get_record()
 
 def compute_command_name_without_prefix(command_name: str):
     return command_name[len(COMMAND_NAME_PREFIX):]
@@ -278,3 +249,10 @@ def is_line_time_deference(line: str):
 
 def is_line_recording_start(line_without_trailing_newline: str):
     return line_without_trailing_newline == RECORDING_START_MESSAGE
+
+result = read_file_record('C:\\Users\\Samuel\\AppData\\Roaming\\talon\\user\\BAR Data\\record short.txt')
+for command in result:
+    if command.is_command_record():
+        print(command)
+    else:
+        print('recordings start')
