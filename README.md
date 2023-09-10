@@ -37,4 +37,4 @@ basic_action_recorder_unregister_callback_function_with_name(name: str)
 # Settings
 If user.basic_action_recorder_record_in_file is set to any integer other than 0, the basic action history is outputted to the record file in the BAR Data directory. The setting is 0 by default. By default, the basic action recorder will store any recordings in the most recently updated record file on startup. Which record is used can be changed with the above record commands. 
 
-If user.should_record_time_information is set to any integer other than 0, the basic action history will include information on how many seconds has passed between the start of a command and the last action as well as when recording has started (such as after a restart or a setting change). 
+If user.should_record_time_information is set to any integer other than 0, the basic action history record file will include information on how many seconds has passed between the start of a command and the last action as well as when recording has started (such as after a restart or a setting change). 
