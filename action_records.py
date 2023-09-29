@@ -86,11 +86,12 @@ class TalonCapture:
         return self.name == other.name and self.instance == other.instance and self.postfix == other.postfix
 
 class Command:
-    def __init__(self, name: str, actions):
+    def __init__(self, name: str, actions, seconds_since_action: int = None):
         self.name = name
         self.actions = actions
+        self.seconds_since_action = seconds_since_action
     
-    def get_name(self):
+    def get_name(self) -> str:
         return self.name
     
     def get_actions(self):
@@ -99,11 +100,29 @@ class Command:
     def copy(self):
         return Command(self.name, self.actions[:])
     
-    def has_same_actions_as(self, other):
+    def has_same_actions_as(self, other) -> bool:
         return self.actions == other.actions
     
-    def set_name(self, name: str):
+    def set_name(self, name: str) -> None:
         self.name = name
+    
+    def is_time_information_available(self) -> bool:
+        return self.seconds_since_action is not None
+    
+    def get_seconds_since_action(self) -> int:
+        return self.seconds_since_action
+
+    def is_command_record(self):
+        return True
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __str__(self):
+        representation =  f'Command({self.name}{", " + str(self.seconds_since_action) if self.is_time_information_available() else ""},\n'
+        for action in self.actions: representation += str(action) + '\n'
+        representation += ')'
+        return representation
 
 class CommandChain(Command):
     def __init__(self, name: str, actions, chain_number: int = 0, chain_size: int = 0):
@@ -131,33 +150,114 @@ class CommandChain(Command):
     def get_size(self):
         return self.chain_size
 
+class RecordingStart:
+    def is_command_record(self):
+        return False
+
 COMMAND_NAME_PREFIX = 'Command: '
+RECORDING_START_MESSAGE = 'START'
+TIME_DIFFERENCE_PREFIX = 'T'
+
+class RecordParser:
+    def __init__(self, path: str):
+        self.commands = []
+        self.current_command_name = ''
+        self.current_command_actions = []
+        self.seconds_since_last_action = None
+        self.seconds_since_last_action_for_next_command = None
+        self.time_information_found_after_command = False
+        self.parse_path(path)
+
+    def parse_path(self, path: str):
+        self.process_file_lines(path)
+        if self.is_command_found():
+            self.add_current_command() 
+    
+    def process_file_lines(self, path: str):
+        with open(path, 'r') as file:
+            line = file.readline()
+            while line:
+                line_without_trailing_newline = line.strip()
+                self.process_line(line_without_trailing_newline)
+                line = file.readline()
+
+    def process_line(self, line: str):
+        if is_action(line):
+            self.add_action_based_on_line(line)
+        elif is_line_command_start(line):
+            self.process_command_start(line)
+        elif is_line_time_deference(line):
+            self.process_time_difference(line)
+        elif is_line_recording_start(line):
+            self.process_recording_start()
+        if is_line_command_ending(line):
+            self.reset_command_information_except_name()
+     
+    def add_action_based_on_line(self, line_without_trailing_newline: str):
+        self.current_command_actions.append(BasicAction.from_json(line_without_trailing_newline))
+
+    def process_command_start(self, line_without_trailing_newline: str):
+        self.add_current_command_if_available()
+        self.current_command_name = compute_command_name_without_prefix(line_without_trailing_newline)
+
+    def add_current_command_if_available(self):
+        if self.is_command_found():
+            self.add_current_command()
+
+    def is_command_found(self):
+        return len(self.current_command_actions) > 0
+
+    def add_current_command(self):
+        seconds_since_last_action = self.seconds_since_last_action
+        if not self.time_information_found_after_command:
+            seconds_since_last_action = self.seconds_since_last_action_for_next_command
+        self.commands.append(Command(self.current_command_name, self.current_command_actions[:], seconds_since_last_action))
+
+    def process_time_difference(self, line_without_trailing_newline):
+        self.seconds_since_last_action = self.seconds_since_last_action_for_next_command
+        self.seconds_since_last_action_for_next_command = compute_seconds_since_last_action(line_without_trailing_newline)
+        self.time_information_found_after_command = True
+
+    def process_recording_start(self):
+        self.add_current_command_if_available()
+        self.commands.append(RecordingStart())
+        self.current_command_name = ''
+
+    def reset_command_information_except_name(self):
+        self.current_command_actions = []
+        self.seconds_since_last_action = None
+        if not self.time_information_found_after_command:
+            self.seconds_since_last_action_for_next_command = None
+        self.time_information_found_after_command = False
+
+    def get_record(self):
+        return self.commands
 
 def read_file_record(path: str):
     '''Obtains a list of the basic actions performed by the commands in the specified record file'''
-    commands = []
-    current_command_name = ''
-    current_command_actions = []
-    with open(path, 'r') as file:
-        line = file.readline()
-        while line:
-            line_without_trailing_newline = line.strip()
-            if is_action(line_without_trailing_newline):
-                current_command_actions.append(BasicAction.from_json(line_without_trailing_newline))
-            elif line.startswith(COMMAND_NAME_PREFIX):
-                if len(current_command_actions) > 0:
-                    commands.append(Command(current_command_name, current_command_actions[:])) 
-                current_command_name = compute_command_name_without_prefix(line_without_trailing_newline)
-                current_command_actions = []
-            line = file.readline()
-        if len(current_command_actions) > 0:
-            commands.append(Command(current_command_name, current_command_actions[:])) 
-    return commands
+    parser = RecordParser(path)
+    return parser.get_record()
 
 def compute_command_name_without_prefix(command_name: str):
     return command_name[len(COMMAND_NAME_PREFIX):]
- 
 
+def compute_seconds_since_last_action(time_record: str) -> int:
+    return time_record[1:]
 
 def is_action(text: str):
     return text.startswith('{')
+
+def compute_time_difference_text(difference: int) -> str:
+    return TIME_DIFFERENCE_PREFIX + str(difference)
+
+def is_line_command_ending(line_without_trailing_newline: str):
+    return is_line_command_start(line_without_trailing_newline) or is_line_recording_start(line_without_trailing_newline)
+
+def is_line_command_start(line: str):
+    return line.startswith(COMMAND_NAME_PREFIX)
+
+def is_line_time_deference(line: str):
+    return line.startswith(TIME_DIFFERENCE_PREFIX)
+
+def is_line_recording_start(line_without_trailing_newline: str):
+    return line_without_trailing_newline == RECORDING_START_MESSAGE

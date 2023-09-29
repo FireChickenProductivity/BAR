@@ -1,5 +1,7 @@
 from talon import Module, actions, Context, imgui, speech_system, app, settings
-from .action_records import BasicAction
+from .action_records import BasicAction, RECORDING_START_MESSAGE, compute_time_difference_text
+from .time_difference import TimeDifference
+from .delayed_hissing_response import DelayedHissingJobHandler
 import os
 from typing import Callable
 
@@ -18,6 +20,14 @@ should_record_in_file = module.setting(
     desc = 'Determines if the basic action recorder should record actions in a file for analysis. 0 means false and any other integer means true.'
 )
 
+should_record_time_information = module.setting(
+    'basic_action_recorder_record_time_information_in_file',
+    type = int,
+    default = 1,
+    desc = '''Determines if the basic action recorder should record time information in the record file when recording in the file. 
+    0 means false and any other integer means true.'''
+)
+
 OUTPUT_DIRECTORY = None
 PRIMARY_OUTPUT_FILE_NAME = 'record'
 PRIMARY_OUTPUT_FILE_EXTENSION = '.txt'
@@ -29,8 +39,7 @@ def set_up():
     if not os.path.exists(OUTPUT_DIRECTORY):
         os.makedirs(OUTPUT_DIRECTORY)
     update_record_file_name_to_most_recent()
-    if should_record_in_file.get():
-        start_recording()
+    start_recording_when_should_record_in_file(should_record_in_file.get())
 
 def update_record_file_name_to_most_recent():
     name = compute_most_recently_updated_record_file_name(OUTPUT_DIRECTORY)
@@ -95,7 +104,7 @@ class ActionRecorder:
         if not self.temporarily_rejecting_actions and self.should_record_when_not_temporarily_rejecting_actions():
             action = BasicAction(name, arguments)
             if self.recording_actions_in_primary_memory: self.record_action(action)
-            if should_record_in_file.get(): record_output_to_file(action.to_json())
+            if should_record_in_file.get(): record_action_to_file_record(action.to_json())
             if callback_manager.is_listening(): callback_manager.handle_action(action)
     
     def should_record_when_not_temporarily_rejecting_actions(self):
@@ -199,6 +208,7 @@ class CallbackManager:
     def handle_action(self, action):
         for function_name in self.functions: self.functions[function_name](action)
 
+time_difference_manager = TimeDifference()
 recorder = ActionRecorder()
 history = ActionHistory()
 callback_manager = CallbackManager()
@@ -367,6 +377,7 @@ def stop_recording_if_nothing_listening():
 def start_recording_when_should_record_in_file(should_record_in_file):
     if should_record_in_file:
         start_recording()
+        record_recording_start_to_file_if_needed()
     else:
         stop_recording_if_nothing_listening()
     
@@ -379,9 +390,35 @@ def log(*args):
     text = ' '.join(string_arguments)
     print('Basic Action Recorder:', text)
 
+def record_recording_start_to_file_if_needed():
+    if should_record_time_information.get():
+        record_output_to_file(RECORDING_START_MESSAGE)
+
+def record_command_start_to_file_record(text: str):
+    output = []
+    time_difference_manager.receive_current_time()
+    if should_record_time_information.get():
+        time_difference = time_difference_manager.get_difference()
+        time_difference_text = compute_time_difference_text(time_difference)
+        output.append(time_difference_text)
+    output.append(text)
+    record_outputs_to_file(output)
+
+def record_action_to_file_record(text: str):
+    time_difference_manager.receive_current_time()
+    record_output_to_file(text)
+
+def record_outputs_to_file(outputs):
+    with open(primary_output_path, 'a') as file:
+        for output in outputs:
+            write_output_line_to_file(output, file)
+
 def record_output_to_file(text: str):
     with open(primary_output_path, 'a') as file:
-        file.write(text + '\n')
+        write_output_line_to_file(text, file)
+
+def write_output_line_to_file(output, file):
+    file.write(output + '\n')
 
 def on_phrase(j):
     global history
@@ -392,16 +429,24 @@ def on_phrase(j):
             if history.is_recording_history():
                 history.record_action('Command: ' + command_chain)
             if should_record_in_file.get() != 0:
-                record_output_to_file('Command: ' + command_chain)
+                record_command_start_to_file_record('Command: ' + command_chain)
 
 speech_system.register('phrase', on_phrase)
 
-def on_noise(name: str, finished: bool):
+def record_hiss(finished: bool):
+    record_noise('hiss', finished)
+
+def record_noise(name: str, finished: bool):
     if history.is_recording_history():
         history.record_action(f'Noise: {name} {compute_noise_postfix(finished)}')
     
     if should_record_in_file.get():
-        record_output_to_file('Command: ' + 'noise_' + name + '_' + compute_noise_postfix(finished))
+        record_command_start_to_file_record('Command: ' + 'noise_' + name + '_' + compute_noise_postfix(finished))
+
+delayed_hiss_handler = DelayedHissingJobHandler(record_hiss)
+def on_noise(name: str, finished: bool):
+    if name == 'hiss': delayed_hiss_handler.handled_delayed_hiss(finished)
+    else: record_noise(name, finished)
 
 def compute_noise_postfix(finished: bool):
     return "start" if finished else "end"
