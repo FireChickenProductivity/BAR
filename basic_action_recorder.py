@@ -1,6 +1,7 @@
 from talon import Module, actions, Context, imgui, speech_system, app, settings
 from .action_records import BasicAction, RECORDING_START_MESSAGE, compute_time_difference_text
 from .time_difference import TimeDifference
+from .delayed_hissing_response import DelayedHissingJobHandler
 import os
 from typing import Callable
 
@@ -432,12 +433,20 @@ def on_phrase(j):
 
 speech_system.register('phrase', on_phrase)
 
-def on_noise(name: str, finished: bool):
+def record_hiss(finished: bool):
+    record_noise('hiss', finished)
+
+def record_noise(name: str, finished: bool):
     if history.is_recording_history():
         history.record_action(f'Noise: {name} {compute_noise_postfix(finished)}')
     
     if should_record_in_file.get():
         record_command_start_to_file_record('Command: ' + 'noise_' + name + '_' + compute_noise_postfix(finished))
+
+delayed_hiss_handler = DelayedHissingJobHandler(record_hiss)
+def on_noise(name: str, finished: bool):
+    if name == 'hiss': delayed_hiss_handler.handled_delayed_hiss(finished)
+    else: record_noise(name, finished)
 
 def compute_noise_postfix(finished: bool):
     return "start" if finished else "end"
