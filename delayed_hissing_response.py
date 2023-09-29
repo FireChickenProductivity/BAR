@@ -4,7 +4,7 @@ module = Module()
 hissing_start_time = module.setting(
     'basic_action_recorder_hissing_recognition_start_delay',
     type = int,
-    default = 300,
+    default = 350,
     desc = 'How long the basic action recorder will wait before recognizing the start of a hiss in milliseconds'
 )
 

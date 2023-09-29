@@ -437,17 +437,16 @@ def record_hiss(finished: bool):
     record_noise('hiss', finished)
 
 def record_noise(name: str, finished: bool):
-    pass
-
-delayed_hiss_handler = DelayedHissingJobHandler(record_hiss)
-def on_noise(name: str, finished: bool):
     if history.is_recording_history():
         history.record_action(f'Noise: {name} {compute_noise_postfix(finished)}')
     
     if should_record_in_file.get():
         record_command_start_to_file_record('Command: ' + 'noise_' + name + '_' + compute_noise_postfix(finished))
 
-
+delayed_hiss_handler = DelayedHissingJobHandler(record_hiss)
+def on_noise(name: str, finished: bool):
+    if name == 'hiss': delayed_hiss_handler.handled_delayed_hiss(finished)
+    else: record_noise(name, finished)
 
 def compute_noise_postfix(finished: bool):
     return "start" if finished else "end"
