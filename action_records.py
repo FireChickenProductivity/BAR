@@ -242,7 +242,7 @@ def compute_command_name_without_prefix(command_name: str):
     return command_name[len(COMMAND_NAME_PREFIX):]
 
 def compute_seconds_since_last_action(time_record: str) -> int:
-    return time_record[1:]
+    return int(time_record[1:])
 
 def is_action(text: str):
     return text.startswith('{')
