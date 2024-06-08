@@ -1,8 +1,10 @@
-from talon import cron, Module
+from talon import cron, Module, settings
 
 module = Module()
-hissing_start_time = module.setting(
-    'basic_action_recorder_hissing_recognition_start_delay',
+hissing_start_time_setting_name = 'basic_action_recorder_hissing_recognition_start_delay'
+hissing_start_time = 'user.' + hissing_start_time_setting_name
+module.setting(
+    hissing_start_time_setting_name,
     type = int,
     default = 350,
     desc = 'How long the basic action recorder will wait before recognizing the start of a hiss in milliseconds'
@@ -21,7 +23,7 @@ class DelayedHissingJobHandler:
             self.stop_delayed_hiss()
     
     def start_delayed_hiss(self):
-        self.job = cron.after(f'{hissing_start_time.get()}ms', self.start_hiss_if_not_canceled)
+        self.job = cron.after(f'{settings.get(hissing_start_time)}ms', self.start_hiss_if_not_canceled)
         
     def start_hiss_if_not_canceled(self):
         self.callback(True)
