@@ -6,22 +6,28 @@ import os
 from typing import Callable
 
 module = Module()
-history_size = module.setting(
-    'basic_action_recorder_history_size',
+history_size_setting_name = 'basic_action_recorder_history_size'
+history_size = 'user.' + history_size_setting_name
+module.setting(
+    history_size_setting_name,
     type = int,
     default = 20,
     desc = 'How many basic actions to show at a time in the basic action recorder history.'
 )
 
-should_record_in_file = module.setting(
-    'basic_action_recorder_record_in_file',
+should_record_in_file_setting_name = 'basic_action_recorder_record_in_file'
+should_record_in_file = 'user.' + should_record_in_file_setting_name
+module.setting(
+    should_record_in_file_setting_name,
     type = int,
     default = 0,
     desc = 'Determines if the basic action recorder should record actions in a file for analysis. 0 means false and any other integer means true.'
 )
 
-should_record_time_information = module.setting(
-    'basic_action_recorder_record_time_information_in_file',
+should_record_time_information_setting_name = 'basic_action_recorder_record_time_information_in_file'
+should_record_time_information = 'user.' + should_record_time_information_setting_name
+module.setting(
+    should_record_time_information_setting_name,
     type = int,
     default = 1,
     desc = '''Determines if the basic action recorder should record time information in the record file when recording in the file. 
@@ -39,7 +45,7 @@ def set_up():
     if not os.path.exists(OUTPUT_DIRECTORY):
         os.makedirs(OUTPUT_DIRECTORY)
     update_record_file_name_to_most_recent()
-    start_recording_when_should_record_in_file(should_record_in_file.get())
+    start_recording_when_should_record_in_file(settings.get(should_record_in_file))
 
 def update_record_file_name_to_most_recent():
     name = compute_most_recently_updated_record_file_name(OUTPUT_DIRECTORY)
@@ -104,11 +110,11 @@ class ActionRecorder:
         if not self.temporarily_rejecting_actions and self.should_record_when_not_temporarily_rejecting_actions():
             action = BasicAction(name, arguments)
             if self.recording_actions_in_primary_memory: self.record_action(action)
-            if should_record_in_file.get(): record_action_to_file_record(action.to_json())
+            if settings.get(should_record_in_file): record_action_to_file_record(action.to_json())
             if callback_manager.is_listening(): callback_manager.handle_action(action)
     
     def should_record_when_not_temporarily_rejecting_actions(self):
-        return self.recording_actions_in_primary_memory or should_record_in_file.get() or callback_manager.is_listening()
+        return self.recording_actions_in_primary_memory or settings.get(should_record_in_file) or callback_manager.is_listening()
 
     def stop_recording_actions_in_primary_memory(self):
         self.recording_actions_in_primary_memory = False
@@ -160,7 +166,7 @@ class ActionHistory:
                 self.actions[-1] = f'{previous_number_of_times + 1}X {description}'
             else:
                 self.actions.append(description)
-                if len(self.actions) > history_size.get():
+                if len(self.actions) > settings.get(history_size):
                     self.actions.pop(0)
     
     def is_recording_history(self):
@@ -391,13 +397,13 @@ def log(*args):
     print('Basic Action Recorder:', text)
 
 def record_recording_start_to_file_if_needed():
-    if should_record_time_information.get():
+    if settings.get(should_record_time_information):
         record_output_to_file(RECORDING_START_MESSAGE)
 
 def record_command_start_to_file_record(text: str):
     output = []
     time_difference_manager.receive_current_time()
-    if should_record_time_information.get():
+    if settings.get(should_record_time_information):
         time_difference = time_difference_manager.get_difference()
         time_difference_text = compute_time_difference_text(time_difference)
         output.append(time_difference_text)
@@ -422,13 +428,13 @@ def write_output_line_to_file(output, file):
 
 def on_phrase(j):
     global history
-    if actions.speech.enabled() and (history.is_recording_history() or should_record_in_file.get() != 0):
+    if actions.speech.enabled() and (history.is_recording_history() or settings.get(should_record_in_file) != 0):
         words = j.get('text')
         if words:
             command_chain = ' '.join(words)
             if history.is_recording_history():
                 history.record_action('Command: ' + command_chain)
-            if should_record_in_file.get() != 0:
+            if settings.get(should_record_in_file) != 0:
                 record_command_start_to_file_record('Command: ' + command_chain)
 
 speech_system.register('phrase', on_phrase)
@@ -440,7 +446,7 @@ def record_noise(name: str, finished: bool):
     if history.is_recording_history():
         history.record_action(f'Noise: {name} {compute_noise_postfix(finished)}')
     
-    if should_record_in_file.get():
+    if settings.get(should_record_in_file):
         record_command_start_to_file_record('Command: ' + 'noise_' + name + '_' + compute_noise_postfix(finished))
 
 delayed_hiss_handler = DelayedHissingJobHandler(record_hiss)
