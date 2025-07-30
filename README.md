@@ -40,3 +40,25 @@ If user.basic_action_recorder_record_in_file is set to any integer other than 0,
 If user.should_record_time_information is set to any integer other than 0, the basic action history record file will include information on how many seconds has passed between the start of a command and the last action as well as when recording has started (such as after a restart or a setting change). 
 
 user.basic_action_recorder_hissing_recognition_start_delay determines how long the basic action recorder will wait before recognizing the start of a hiss in milliseconds. It is set to 350 by default. Consider increasing this if it is too sensitive to hissing noises. 
+
+# Dependencies
+The basic action recorder now records some community actions related to snippets. It may consequently not work properly without community. If you run into problems with this, consider providing your own implementations of the following actions so that the basic action recorder can have something to override: 
+
+```python
+class Actions:
+	def move_cursor_to_next_snippet_stop():
+		"""Moves the cursor to the next snippet placeholder"""
+		pass
+
+	def insert_snippet_by_name(
+				name: str,
+				substitutions: dict[str, str] = None,
+			):
+		"""Inserts the specified snippet by name"""
+		pass
+
+	def insert_snippet_by_name_with_phrase(name: str, phrase: str):
+		"""Inserts a snippet by name using the specified phrase for one of the snippet holes"""
+		pass
+```
+

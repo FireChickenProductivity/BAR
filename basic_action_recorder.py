@@ -130,6 +130,9 @@ class ActionRecorder:
 
     def is_accepting_actions(self):
         return self.recording_actions_in_primary_memory
+
+    def is_temporarily_rejecting_actions(self):
+        return self.temporarily_rejecting_actions
     
     def compute_talon_script(self):
         code = []
@@ -223,18 +226,32 @@ module.tag(RECORDING_TAG_NAME)
 recording_context = Context()
 recording_context.matches = 'tag: user.' + RECORDING_TAG_NAME
 
+def temporarily_stop_recording():
+    recorder.temporarily_reject_actions()
+    history_was_recording = history.is_recording_history()
+    history.stop_recording_history()
+    return history_was_recording
+
+def resume_recording(history_was_recording: bool):
+    recorder.stop_temporarily_rejecting_actions()
+    if history_was_recording:
+        history.start_recording_history()
+
 @recording_context.action_class("main")
 class MainActions:
     def insert(text: str):
-        recorder.temporarily_reject_actions()
-        history_was_recording = history.is_recording_history()
-        history.stop_recording_history()
-        actions.next(text)
-        recorder.stop_temporarily_rejecting_actions()
-        if history_was_recording:
-            history.start_recording_history()
-        recorder.record_basic_action('insert', [str(text)])
-        history.record_action(compute_insert_description(text))
+        if recorder.is_temporarily_rejecting_actions():
+            actions.next(text)
+        else:
+            recorder.temporarily_reject_actions()
+            history_was_recording = history.is_recording_history()
+            history.stop_recording_history()
+            actions.next(text)
+            recorder.stop_temporarily_rejecting_actions()
+            if history_was_recording:
+                history.start_recording_history()
+            recorder.record_basic_action('insert', [str(text)])
+            history.record_action(compute_insert_description(text))
 
     def key(key: str):
         actions.next(key)
@@ -255,6 +272,7 @@ class MainActions:
         actions.next(y, x, by_lines)
         recorder.record_basic_action('mouse_scroll', [float(y), float(x), bool(by_lines)])
         history.record_action(compute_mouse_scroll_description(y, x, by_lines))
+
 
 def compute_insert_description(text: str):
     return f"Type: {text}"
