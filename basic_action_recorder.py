@@ -223,6 +223,17 @@ module.tag(RECORDING_TAG_NAME)
 recording_context = Context()
 recording_context.matches = 'tag: user.' + RECORDING_TAG_NAME
 
+def temporarily_stop_recording():
+    recorder.temporarily_reject_actions()
+    history_was_recording = history.is_recording_history()
+    history.stop_recording_history()
+    return history_was_recording
+
+def resume_recording(history_was_recording: bool):
+    recorder.stop_temporarily_rejecting_actions()
+    if history_was_recording:
+        history.start_recording_history()
+
 @recording_context.action_class("user")
 class UserActions:
     def insert_snippet_by_name(
@@ -232,25 +243,17 @@ class UserActions:
         if substitutions:
             actions.next(name, substitutions)
         else:
-            recorder.temporarily_reject_actions()
-            history_was_recording = history.is_recording_history()
-            history.stop_recording_history()
+            history_was_recording = temporarily_stop_recording()
             actions.next(name, substitutions)
-            recorder.stop_temporarily_rejecting_actions()
-            if history_was_recording:
-                history.start_recording_history()
+            resume_recording(history_was_recording)
             name = str(name)
             recorder.record_basic_action('user.insert_snippet_by_name', [name])
             history.record_action(compute_snippet_description(name))
 
     def insert_snippet_by_name_with_phrase(name: str, phrase: str):
-        recorder.temporarily_reject_actions()
-        history_was_recording = history.is_recording_history()
-        history.stop_recording_history()
+        history_was_recording = temporarily_stop_recording()
         actions.next(name, phrase)
-        recorder.stop_temporarily_rejecting_actions()
-        if history_was_recording:
-            history.start_recording_history()
+        resume_recording(history_was_recording)
         name = str(name)
         phrase = str(phrase)
         recorder.record_basic_action('user.insert_snippet_by_name_with_phrase', [name, phrase])
