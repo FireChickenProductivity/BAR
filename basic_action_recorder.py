@@ -253,7 +253,7 @@ class UserActions:
             history.start_recording_history()
         name = str(name)
         phrase = str(phrase)
-        recorder.record_basic_action('user.insert_snippet_by_name', [name, phrase])
+        recorder.record_basic_action('user.insert_snippet_by_name_with_phrase', [name, phrase])
         history.record_action(compute_snippet_with_phrase_description(name, phrase))
 
 @recording_context.action_class("main")
