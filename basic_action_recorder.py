@@ -130,6 +130,9 @@ class ActionRecorder:
 
     def is_accepting_actions(self):
         return self.recording_actions_in_primary_memory
+
+    def is_temporarily_rejecting_actions(self):
+        return self.temporarily_rejecting_actions
     
     def compute_talon_script(self):
         code = []
@@ -223,6 +226,19 @@ module.tag(RECORDING_TAG_NAME)
 recording_context = Context()
 recording_context.matches = 'tag: user.' + RECORDING_TAG_NAME
 
+vscode_recording_context = Context()
+vscode_recording_context.matches = r"""app: vscode
+tag: user.""" + RECORDING_TAG_NAME
+
+@vscode_recording_context.action_class("user")
+class VsCodeActions:
+    def move_cursor_to_next_snippet_stop():
+        history_was_recording = temporarily_stop_recording()
+        actions.next()
+        resume_recording(history_was_recording)
+        recorder.record_basic_action('user.move_cursor_to_next_snippet_stop', [])
+        history.record_action(compute_snippet_next_description())
+
 def temporarily_stop_recording():
     recorder.temporarily_reject_actions()
     history_was_recording = history.is_recording_history()
@@ -236,6 +252,16 @@ def resume_recording(history_was_recording: bool):
 
 @recording_context.action_class("user")
 class UserActions:
+    def move_cursor_to_next_snippet_stop():
+        if recorder.is_temporarily_rejecting_actions():
+            actions.next()
+        else:
+            history_was_recording = temporarily_stop_recording()
+            actions.next()
+            resume_recording(history_was_recording)
+            recorder.record_basic_action('user.move_cursor_to_next_snippet_stop', [])
+            history.record_action(compute_snippet_next_description())
+
     def insert_snippet_by_name(
             name: str,
             substitutions: dict[str, str] = None,
@@ -262,15 +288,18 @@ class UserActions:
 @recording_context.action_class("main")
 class MainActions:
     def insert(text: str):
-        recorder.temporarily_reject_actions()
-        history_was_recording = history.is_recording_history()
-        history.stop_recording_history()
-        actions.next(text)
-        recorder.stop_temporarily_rejecting_actions()
-        if history_was_recording:
-            history.start_recording_history()
-        recorder.record_basic_action('insert', [str(text)])
-        history.record_action(compute_insert_description(text))
+        if recorder.is_temporarily_rejecting_actions():
+            actions.next(text)
+        else:
+            recorder.temporarily_reject_actions()
+            history_was_recording = history.is_recording_history()
+            history.stop_recording_history()
+            actions.next(text)
+            recorder.stop_temporarily_rejecting_actions()
+            if history_was_recording:
+                history.start_recording_history()
+            recorder.record_basic_action('insert', [str(text)])
+            history.record_action(compute_insert_description(text))
 
     def key(key: str):
         actions.next(key)
@@ -297,6 +326,9 @@ def compute_snippet_description(name: str):
 
 def compute_snippet_with_phrase_description(name: str, phrase: str):
     return f"Insert Snippet ({name}) with phrase: {phrase}"
+
+def compute_snippet_next_description():
+    return "Go to next snippet placeholder"
 
 def compute_insert_description(text: str):
     return f"Type: {text}"
